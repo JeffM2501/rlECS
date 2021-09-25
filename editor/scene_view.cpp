@@ -32,17 +32,17 @@
 
 #include "drawing_utils.h"
 
-#include "automover_component.h"
-#include "camera_component.h"
-#include "drawable_component.h"
-#include "flight_data_component.h"
-#include "light_component.h"
-#include "look_at_component.h"
-#include "transform_component.h"
+#include "components/automover_component.h"
+#include "components/camera_component.h"
+#include "components/drawable_component.h"
+#include "components/flight_data_component.h"
+#include "components/light_component.h"
+#include "components/look_at_component.h"
+#include "components/transform_component.h"
 
-#include "free_flight_controller.h"
-#include "lighting_system.h"
-#include "render_system.h"
+#include "systems/free_flight_controller.h"
+#include "systems/lighting_system.h"
+#include "systems/render_system.h"
 
 #include "raylib.h"
 
@@ -77,6 +77,9 @@ void SceneView::OnSetup()
     ShapeComponent* drawable = Entities.AddComponent<ShapeComponent>(testEntity);
     drawable->ObjectColor = Colors::Green;
     drawable->ObjectSize = Vector3{ 1,1,1 };
+
+    AutoMoverComponent* mover = drawable->MustGetComponent<AutoMoverComponent>();
+    mover->AngularSpeed.y = 90;
 }
 
 void SceneView::OnStartFrameCamera(const Rectangle& contentArea)

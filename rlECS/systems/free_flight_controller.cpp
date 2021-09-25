@@ -26,9 +26,8 @@
 *
 **********************************************************************************************/
 
-#include "free_flight_controller.h"
-
-#include "flight_data_component.h"
+#include "systems/free_flight_controller.h"
+#include "components/flight_data_component.h"
 
 #include "raylib.h"
 

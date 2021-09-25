@@ -26,12 +26,12 @@
 *
 **********************************************************************************************/
 
-#include "render_system.h"
+#include "components/drawable_component.h"
+#include "components/transform_component.h"
+#include "components/camera_component.h"
 
-#include "drawable_component.h"
-#include "transform_component.h"
-#include "camera_component.h"
-#include "lighting_system.h"
+#include "systems/render_system.h"
+#include "systems/lighting_system.h"
 
 #include "raylib.h"
 

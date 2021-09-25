@@ -244,6 +244,11 @@ void ThreeDView::DrawDefaultScene()
     {
         DrawUtils::DrawGridXZ(Vector3Zero(), planeSize, 1, ColorAlpha(Colors::RayWhite, 0.75f), ColorAlpha(Colors::DarkGray, 0.5f));
         rlSetLineWidth(2.0f);
+        rlDrawRenderBatchActive();
+
+        rlSetLineWidth(3.0f);
+        DrawLine3D(Vector3{ 0,0,0 }, Vector3{ planeSize,0,0 }, RED);
+        DrawLine3D(Vector3{ 0,0,0 }, Vector3{ 0,0,planeSize }, BLUE);
     }
 
     rlDrawRenderBatchActive();

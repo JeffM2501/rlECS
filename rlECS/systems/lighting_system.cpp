@@ -26,10 +26,10 @@
 *
 **********************************************************************************************/
 
-#include "lighting_system.h"
+#include "systems/lighting_system.h"
 
-#include "light_component.h"
-#include "transform_component.h"
+#include "components/light_component.h"
+#include "components/transform_component.h"
 
 #include "raylib.h"
 

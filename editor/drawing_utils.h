@@ -91,10 +91,13 @@ namespace DrawUtils
         {
             if (i == 0)
             {
-                rlColor4ub(axisColor.r, axisColor.g, axisColor.b, axisColor.a);
-                rlColor4ub(axisColor.r, axisColor.g, axisColor.b, axisColor.a);
-                rlColor4ub(axisColor.r, axisColor.g, axisColor.b, axisColor.a);
-                rlColor4ub(axisColor.r, axisColor.g, axisColor.b, axisColor.a);
+                if (axisColor.a != 0)
+                {
+                    rlColor4ub(axisColor.r, axisColor.g, axisColor.b, axisColor.a);
+                    rlColor4ub(axisColor.r, axisColor.g, axisColor.b, axisColor.a);
+                    rlColor4ub(axisColor.r, axisColor.g, axisColor.b, axisColor.a);
+                    rlColor4ub(axisColor.r, axisColor.g, axisColor.b, axisColor.a);
+                }
             }
             else
             {

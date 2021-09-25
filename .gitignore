@@ -359,3 +359,15 @@ MigrationBackup/
 /rlECS.sln
 /rlECS/rlECS.vcxproj
 /rlECS/rlECS.vcxproj.filters
+/build/clip/clip.vcxproj
+/build/clip/clip.vcxproj.filters
+/build/editor/editor.vcxproj
+/build/editor/editor.vcxproj.filters
+/build/raylib/raylib.vcxproj
+/build/raylib/raylib.vcxproj.filters
+/build/rlECS/rlECS.vcxproj
+/build/rlECS/rlECS.vcxproj.filters
+/build/rlExtrasCPP/rlExtrasCPP.vcxproj
+/build/rlExtrasCPP/rlExtrasCPP.vcxproj.filters
+/build/rlImGui/rlImGui.vcxproj
+/build/rlImGui/rlImGui.vcxproj.filters

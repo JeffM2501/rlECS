@@ -29,7 +29,7 @@
 #pragma once
 
 #include "system_manager.h"
-#include "transform_component.h"
+#include "components/transform_component.h"
 
 // an example system that works on one component at a time
 

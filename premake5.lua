@@ -42,7 +42,7 @@ project "raylib"
 			
 		filter{}
 		
-		location "build"
+		location "build/raylib"
 		language "C++"
 		targetdir "bin/%{cfg.buildcfg}"
 		cppdialect "C++17"
@@ -57,19 +57,27 @@ project "raylib"
 		
 project "rlECS"
 	kind "StaticLib"
-	location "%{wks.name}"
+	location "build/rlECS"
 	language "C++"
 	targetdir "bin/%{cfg.buildcfg}"
 	cppdialect "C++17"
 	
-	includedirs {"raylib/src","src"}
+	includedirs {"raylib/src","rlECS"}
 	vpaths 
 	{
-		["Header Files"] = { "**.h"},
-		["Source Files"] = {"**.c", "**.cpp"},
+		["Header Files"] = { "*.h"},
+		["Source Files"] = {"*.c", "*.cpp"},
 	}
-	files {"rlECS/**.c", "rlECS/**.cpp", "rlECS/**.h"}
-
+	files 
+	{
+		"rlECS/**.c",
+		"rlECS/**.cpp",
+		"rlECS/**.h",
+		"rlECS/components/*.cpp",
+		"rlECS/components/*.h",
+		"rlECS/systems/*.cpp",
+		"rlECS/systems/*.h",
+	}
 project "rlExtrasCPP"
 	kind "StaticLib"
 		
@@ -78,9 +86,9 @@ project "rlExtrasCPP"
 		links {"winmm"}
 				
 	filter{}
-	
-	location "raylibExtras/rlExtrasCPP/"
-	language "C"
+	location "build/rlExtrasCPP"
+	language "C++"
+	cppdialect "C++17"
 	targetdir "bin/%{cfg.buildcfg}"
 	
 	includedirs { "raylib/src","rlExtrasCPP"}
@@ -99,9 +107,9 @@ project "rlImGui"
 		links {"winmm"}
 				
 	filter{}
-	
-	location "raylibExtras/rlImGui/"
+	location "build/rlImGui"
 	language "C++"
+	cppdialect "C++17"
 	targetdir "bin/%{cfg.buildcfg}"
 	
 	includedirs { "raylib/src","raylibExtras/rlImGui", "raylibExtras/imgui"}
@@ -121,8 +129,9 @@ project "clip"
 				
 	filter{}
 	
-	location "clip/"
+	location "build/clip"
 	language "C++"
+	cppdialect "C++17"
 	targetdir "bin/%{cfg.buildcfg}"
 	
 	includedirs { "clip"}
@@ -141,7 +150,7 @@ project "clip"
 
 project "editor"
 	kind "WindowedApp"
-	location "./"
+	location "build/editor"
 	language "C++"
 	targetdir "bin/%{cfg.buildcfg}"
 	cppdialect "C++17"
@@ -152,11 +161,15 @@ project "editor"
 		["Header Files"] = { "editor/*.h"},
 		["Source Files"] = {"editor/*.c", "editor/*.cpp"},
 	}
-	files {"editor/*.c", "editor/*.cpp", "editor/*.h", "editor/views/**.cpp", "editor/views/**.h"}
+	files 
+	{
+		"editor/*.cpp",
+		"editor/*.h",
+	}
 
 	links {"raylib", "rlExtrasCPP", "rlImGui", "clip", "rlECS"}
 	
-	includedirs { "editor", "editor/views", "raylib/src", "raylibExtras/rlExtrasCPP",  "raylibExtras/rlImGui", "raylibExtras/imgui", "clip", "rlECS"}
+	includedirs { "editor", "raylib/src", "raylibExtras/rlExtrasCPP",  "raylibExtras/rlImGui", "raylibExtras/imgui", "clip", "rlECS"}
     
 	defines{"PLATFORM_DESKTOP", "GRAPHICS_API_OPENGL_33"}
 	
