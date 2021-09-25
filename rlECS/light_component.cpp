@@ -65,7 +65,7 @@ void LightComponent::Update(Shader& shader)
     SetShaderValue(shader, EnabledLoc, &LightEnabled, SHADER_UNIFORM_INT);
     SetShaderValue(shader, TypeLoc, &LightType, SHADER_UNIFORM_INT);
 
-    auto* transform = MustGetComponent<TransformComponent>();
+    auto* transform = Entities.MustGetComponent<TransformComponent>(this);
 
     Vector3 pos = transform->GetWorldPosition();
     float p[3] = { pos.x,pos.y,pos.z };

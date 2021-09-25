@@ -35,38 +35,34 @@
 
 #include "raylib.h"
 
-namespace RenderSystem
+
+void RenderSystem::Begin(uint64_t cameraEntityId)
 {
-    Camera3D ViewCam = { 0 };
+    CameraComponent* camera = Entities.MustGetComponent<CameraComponent>(cameraEntityId);
+    ViewCam.fovy = 45;
 
-    void Begin(uint64_t cameraEntityId)
-    {
-        CameraComponent* camera = ComponentManager::MustGetComponent<CameraComponent>(cameraEntityId);
-        ViewCam.fovy = 45;
+    // a camera entity must have a the transform component, if it doesn't we add one and get the default
+    TransformComponent* cameraTransform = Entities.MustGetComponent<TransformComponent>(camera);
 
-        // a camera entity must have a the transform component, if it doesn't we add one and get the default
-        TransformComponent* cameraTransform = ComponentManager::MustGetComponent<TransformComponent>(camera);
+    // copy the transform vectors to the raylib camera
+    ViewCam.position = cameraTransform->GetPosition();
+    ViewCam.target = Vector3Add(cameraTransform->GetPosition(), cameraTransform->GetForwardVector());
+    ViewCam.up = cameraTransform->GetUpVector();
 
-        // copy the transform vectors to the raylib camera
-        ViewCam.position = cameraTransform->GetPosition();
-        ViewCam.target = Vector3Add(cameraTransform->GetPosition(), cameraTransform->GetForwardVector());
-        ViewCam.up = cameraTransform->GetUpVector();
+    BeginMode3D(ViewCam);
+}
 
-        BeginMode3D(ViewCam);
-    }
+void RenderSystem::Draw()
+{
+    // TODO, get the visible set
+    Entities.DoForEachEntity<DrawableComponent>([](DrawableComponent* drawable)
+        {
+            if (drawable->Active)
+                drawable->Draw();
+        });
+}
 
-    void Draw()
-    {
-        // TODO, get the visible set
-        ComponentManager::DoForEachEntity<DrawableComponent>([](DrawableComponent* drawable)
-            {
-                if (drawable->Active)
-                    drawable->Draw();
-            });
-    }
-
-    void End()
-    {
-        EndMode3D();
-    }
+void RenderSystem::End()
+{
+    EndMode3D();
 }

@@ -29,41 +29,49 @@
 #pragma once
 
 #include "entity.h"
-#include "transform_component.h"
 
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
+#include <map>
 
-class LookAtComponent : public Component
+class System
 {
 public:
-    uint64_t TargetEntityId = 0;
+    System(EntitySet& entityManager)
+        :Entities(entityManager)
+    {
+    }
+    virtual size_t Id() { return 0; }
+    virtual const char* SystemName() { return nullptr; }
 
+protected:
+    EntitySet Entities;
+};
+
+#define DEFINE_SYSTEM(TYPE) \
+    TYPE(EntitySet& entities) : System(entities) {} \
+    static size_t GetSystemId() { return reinterpret_cast<size_t>(#TYPE); } \
+    size_t Id() override { return TYPE::GetSystemId(); } \
+    const char* SystemName() override { return #TYPE; }
+
+class SystemSet
+{
 public:
-    DEFINE_COMPONENT(LookAtComponent);
+    SystemSet(EntitySet& entities);
+    virtual ~SystemSet();
 
-    inline void OnCreate() override { NeedUpdate = true; }
+    System* GetSystem(size_t id);
+    System* AddSystem(System* system);
 
-    inline void SetTarget(Component* component)
+    template<class T>
+    inline T* GetSystem()
     {
-        if (component == nullptr)
-            TargetEntityId = 0;
-        else
-            TargetEntityId = component->EntityId;
+        T* system = static_cast<T*>(GetSystem(T::GetSystemId()));
+        if (system != nullptr)
+            return system;
+
+        return static_cast<T*>(AddSystem(new T(this->Entitites)));
     }
 
-    inline void OnUpdate()
-    {
-        if (TargetEntityId == uint64_t(-1))
-            return;
-
-        TransformComponent* selfTransform = Entities.MustGetComponent<TransformComponent>(this);
-
-        TransformComponent* taretTransform = Entities.MustGetComponent<TransformComponent>(TargetEntityId);
-
-        Vector3 targetPos = Vector3Transform(Vector3Zero(), taretTransform->GetWorldMatrix());
-
-        selfTransform->LookAt(targetPos, Vector3{ 0,0,1 });
-    }
+private:
+    EntitySet& Entitites;
+    std::map<size_t, System*> SystemMap;
 };

@@ -28,11 +28,15 @@
 
 #pragma once
 
+#include "system_manager.h"
 #include "transform_component.h"
 
 // an example system that works on one component at a time
 
-namespace FreeFlightController
+class FreeFlightController : public System
 {
+public:
+    DEFINE_SYSTEM(FreeFlightController);
+
     void Update(TransformComponent* transform);
-}
+};

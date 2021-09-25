@@ -29,12 +29,20 @@
 #pragma once
 
 #include "entity.h"
-#include "components.h"
+#include "system_manager.h"
+
+#include "raylib.h"
 
 // an example system that renders all drawables
-namespace RenderSystem
+class RenderSystem : public System
 {
+public:
+    DEFINE_SYSTEM(RenderSystem);
+
     void Begin(uint64_t cameraEntityId);
     void Draw();
     void End();
-}
+
+private:
+    Camera3D ViewCam = { 0 };
+};

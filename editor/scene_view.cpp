@@ -50,53 +50,53 @@ void SceneView::OnSetup()
 {
     ShowGround = false;
 
-    LightingSystem::Setup();
+    Systems.GetSystem<LightingSystem>()->Setup();
 
     // create a light
-    auto* light = ComponentManager::AddComponent<LightComponent>();
-    auto* lightTransform = light->MustGetComponent<TransformComponent>();
+    auto* light = Entities.AddComponent<LightComponent>();
+    auto* lightTransform = Entities.MustGetComponent<TransformComponent>(light);
     lightTransform->SetPosition(10, 10, 10);
-    lightTransform->MustGetComponent<ShapeComponent>()->ObjectShape = DrawShape::Sphere;
+    Entities.MustGetComponent<ShapeComponent>(lightTransform)->ObjectShape = DrawShape::Sphere;
 
     // editor camera
-    TransformComponent* camera = ComponentManager::AddComponent<TransformComponent>();
-    ComponentManager::AddComponent<CameraComponent>(camera);
-    ComponentManager::AddComponent<FlightDataComponent>(camera);
+    TransformComponent* camera = Entities.AddComponent<TransformComponent>();
+    Entities.AddComponent<CameraComponent>(camera);
+    Entities.AddComponent<FlightDataComponent>(camera);
 
     camera->SetPosition(0, 1.5f, -3);
     
     EditorCamera = camera->EntityId;
 
     // basic entity
-    TransformComponent* testEntity = ComponentManager::AddComponent<TransformComponent>();
+    TransformComponent* testEntity = Entities.AddComponent<TransformComponent>();
 
     testEntity->SetPosition(0, 0.5f, 0);
 
     // give it some geometry
     // body
-    ShapeComponent* drawable = ComponentManager::AddComponent<ShapeComponent>(testEntity);
+    ShapeComponent* drawable = Entities.AddComponent<ShapeComponent>(testEntity);
     drawable->ObjectColor = Colors::Green;
     drawable->ObjectSize = Vector3{ 1,1,1 };
 }
 
 void SceneView::OnStartFrameCamera(const Rectangle& contentArea)
 {
-    RenderSystem::Begin(EditorCamera);
+    Systems.GetSystem<RenderSystem>()->Begin(EditorCamera);
 }
 
 void SceneView::OnEndFrameCamera()
 {
-    RenderSystem::End();
+    Systems.GetSystem<RenderSystem>()->End();
 }
 
 void SceneView::OnUpdate()
 {
-    ComponentManager::Update();
-    LightingSystem::UpdateLights();
+    Entities.Update();
+    Systems.GetSystem<LightingSystem>()->UpdateLights();
 
-    FreeFlightController::Update(ComponentManager::GetComponent<TransformComponent>(EditorCamera));
+    Systems.GetSystem<FreeFlightController>()->Update(Entities.GetComponent<TransformComponent>(EditorCamera));
 
-    LightingSystem::Update(EditorCamera);
+    Systems.GetSystem<LightingSystem>()->Update(EditorCamera);
 }
 
 void SceneView::OnShutdown()
@@ -106,5 +106,5 @@ void SceneView::OnShutdown()
 
 void SceneView::OnShow(const Rectangle& contentArea)
 {
-    RenderSystem::Draw();
+    Systems.GetSystem<RenderSystem>()->Draw();
 }

@@ -35,6 +35,8 @@
 #include "raymath.h"
 #include "rlgl.h"
 
+#include "entity.h"
+
 class DrawableComponent : public Component
 {
 public:
@@ -67,7 +69,7 @@ public:
 
     inline void Draw() override
     {
-        TransformComponent* transform = ComponentManager::GetComponent<TransformComponent>(this);
+        TransformComponent* transform = Entities.GetComponent<TransformComponent>(this);
         if (transform == nullptr)
             return;
 

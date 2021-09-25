@@ -33,12 +33,17 @@
 #include "main_view.h"
 
 #include "entity.h"
+#include "system_manager.h"
 
 class SceneView : public ThreeDView
 {
 protected:
 
 public:
+    SceneView() 
+    : Systems(Entities)
+    {}
+
     inline const char* GetName() override { return "Scene View"; }
 
     void OnSetup() override;
@@ -48,6 +53,9 @@ public:
 
 protected:
     uint64_t EditorCamera = 0;
+
+    EntitySet Entities;
+    SystemSet Systems;
 
 protected:
     void OnStartFrameCamera(const Rectangle& contentArea) override;

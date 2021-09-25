@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "components.h"
+#include "entity.h"
 
 #include "raylib.h"
 #include "raymath.h"
@@ -120,7 +120,7 @@ public:
         if (Parent != nullptr)
             Parent->RemoveChild(this);
 
-        EntityManger::ReleaseEntity(EntityId);
+        Entities.RemoveEntity(EntityId);
     }
 
     void SetPosition(float x, float y, float z)

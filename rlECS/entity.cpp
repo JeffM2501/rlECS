@@ -28,36 +28,257 @@
 
 #include "entity.h"
 
-#include <set>
+#include <algorithm>
+#include <map>
 
-namespace EntityManger
+struct ComponentInfo
 {
-    std::set<uint64_t> EntityMap;
-    uint64_t NextEntity = 0;
+    size_t Id = 0;
+    const char* Name = nullptr;
+    ComponentFactory Factory = nullptr;
+};
 
-    uint64_t CreateEntity()
+std::map<size_t, ComponentInfo> ComponentFactories;
+
+// template<class T>
+// inline T* Component::GetComponent()
+// {
+//     return Entitites.GetComponent<T>(this);
+// }
+// 
+// template<class T>
+// inline T* Component::MustGetComponent()
+// {
+//     return Entitites.MustGetComponent<T>(this);
+// }
+// 
+// template<class T>
+// inline T* Component::MustGetComponent(uint64_t id)
+// {
+//     return Entitites.MustGetComponent<T>(id);
+// }
+
+
+namespace ComponentManager
+{
+    void Register(size_t typeId, const char* name, ComponentFactory factory)
     {
-        while (EntityMap.find(NextEntity) != EntityMap.end())
-            NextEntity++;
+        ComponentFactories[typeId] = ComponentInfo{ typeId, name, factory };
+    }
 
-        EntityMap.emplace(NextEntity);
+    Component* Create(size_t typeId, uint64_t entityId, EntitySet& entities)
+    {
+        std::map<size_t, ComponentInfo>::iterator itr = ComponentFactories.find(typeId);
+        if (itr == ComponentFactories.end())
+            return nullptr;
+
+        return itr->second.Factory(entityId, entities);
+    }
+
+    Component* Create(const char* typeName, uint64_t entityId, EntitySet& entities)
+    {
+        for (auto itr : ComponentFactories)
+        {
+            if (strcmp(itr.second.Name, typeName) == 0)
+            {
+                return Create(itr.first, entityId, entities);
+            }
+        }
+
+        return nullptr;
+    }
+}
+
+ComponentTable::~ComponentTable()
+{
+    for (auto& r : Entities)
+    {
+        ComponentList& components = r.second;
+        for (auto c : components)
+            delete(c);
+
+        components.clear();
+    }
+    Entities.clear();
+}
+
+bool ComponentTable::Add(Component* component)
+{
+    ComponentList& components = Entities[component->EntityId];
+    if (components.empty())
+    {
+        components.push_back(component);
+        return true;
+    }
+
+    auto itr = std::find(components.begin(), components.end(), component);
+    if (itr != components.end())
+        return false;
+
+    components.push_back(component);
+    return true;
+}
+
+uint64_t EntitySet::CreateEntity()
+{
+    while (EntityMap.find(NextEntity) != EntityMap.end())
         NextEntity++;
 
-        return NextEntity - 1;
+    EntityMap.emplace(NextEntity);
+    NextEntity++;
+
+    return NextEntity - 1;
+}
+
+void EntitySet::RemoveEntity(uint64_t entityId)
+{
+    for (auto componentTable : ComponentDB)
+    {
+        EraseAllComponents(componentTable.first, entityId);
     }
 
-    void ReleaseEntity(uint64_t id)
-    {
-        auto itr = EntityMap.find(id);
-        if (itr == EntityMap.end())
-            return;
+    auto itr = EntityMap.find(entityId);
+    if (itr == EntityMap.end())
+        return;
 
-        EntityMap.erase(itr);
+    EntityMap.erase(itr);
+}
+
+void EntitySet::Update()
+{
+    for (auto* component : ComponentUpdateCache)
+    {
+        if (component->Active)
+            component->OnUpdate();
     }
+}
 
-    void DoForEach(std::function<void(uint64_t)> func)
+void EntitySet::DoForEachEntity(std::function<void(uint64_t)> func)
+{
+    for (uint64_t entity : EntityMap)
+        func(entity);
+}
+
+Component* EntitySet::StoreComponent(size_t compId, Component* component)
+{
+    ComponentTable& componentTable = ComponentDB[compId];
+
+    if (!componentTable.Add(component))
+        return component;
+
+    component->OnCreate();
+
+    if (component->WantUpdate())
+        ComponentUpdateCache.push_back(component);
+
+    return component;
+}
+
+Component* EntitySet::FindComponent(size_t compId, uint64_t entityId)
+{
+    auto componentTableItr = ComponentDB.find(compId);
+    if (componentTableItr == ComponentDB.end())
+        return nullptr;
+
+    ComponentTable& componentTable = componentTableItr->second;
+
+    auto entityCacheItr = componentTable.Entities.find(entityId);
+    if (entityCacheItr == componentTable.Entities.end() || entityCacheItr->second.empty())
+        return nullptr;
+
+    return entityCacheItr->second[0];
+}
+
+static std::vector<Component*> EmptyComponentList;
+
+const std::vector<Component*>& EntitySet::FindComponents(size_t compId, uint64_t entityId)
+{
+    auto componentTableItr = ComponentDB.find(compId);
+    if (componentTableItr == ComponentDB.end())
+        return EmptyComponentList;
+
+    ComponentTable& componentTable = componentTableItr->second;
+
+    std::map<uint64_t, ComponentList>::iterator entityCacheItr = componentTable.Entities.find(entityId);
+    if (entityCacheItr == componentTable.Entities.end())
+        return EmptyComponentList;
+
+    return entityCacheItr->second;
+}
+
+void EntitySet::EraseAllComponents(size_t compId, uint64_t entityId)
+{
+    auto componentTableItr = ComponentDB.find(compId);
+    if (componentTableItr == ComponentDB.end())
+        return;
+
+    ComponentTable& componentTable = componentTableItr->second;
+
+    auto entityCacheItr = componentTable.Entities.find(entityId);
+    if (entityCacheItr != componentTable.Entities.end())
     {
-        for (uint64_t entity : EntityMap)
-            func(entity);
+        ComponentList& components = entityCacheItr->second;
+        for (Component* component : components)
+        {
+            component->OnDestory();
+            if (component->WantUpdate())
+                ComponentUpdateCache.erase(std::find(ComponentUpdateCache.begin(), ComponentUpdateCache.end(), component));
+
+            delete(component);
+        }
+
+        componentTable.Entities.erase(entityCacheItr);
+    }
+}
+
+void EntitySet::EraseComponent(size_t compId, Component* component)
+{
+    auto componentTableItr = ComponentDB.find(compId);
+    if (componentTableItr == ComponentDB.end())
+        return;
+
+    ComponentTable& componentTable = componentTableItr->second;
+
+    auto entityCacheItr = componentTable.Entities.find(component->EntityId);
+    if (entityCacheItr != componentTable.Entities.end())
+    {
+        ComponentList& components = entityCacheItr->second;
+
+        ComponentList::iterator itr = std::find(components.begin(), components.end(), component);
+
+        component->OnDestory();
+        if (component->WantUpdate())
+            ComponentUpdateCache.erase(std::find(ComponentUpdateCache.begin(), ComponentUpdateCache.end(), component));
+
+        delete(component);
+        components.erase(itr);
+    }
+}
+
+void EntitySet::DoForEachEntity(size_t compId, std::function<void(Component*)> func)
+{
+    auto componentTableItr = ComponentDB.find(compId);
+    if (componentTableItr == ComponentDB.end())
+        return;
+
+    ComponentTable& componentTable = componentTableItr->second;
+
+    for (auto& entity : componentTable.Entities)
+    {
+        for (Component* component : entity.second)
+            func(component);
+    }
+}
+
+void EntitySet::DoForEachComponentInEntity(uint64_t entityId, std::function<void(Component*)> func)
+{
+    for (auto componentTable : ComponentDB)
+    {
+        auto entityItr = componentTable.second.Entities.find(entityId);
+        if (entityItr == componentTable.second.Entities.end())
+            continue;
+
+        for (Component* component : entityItr->second)
+            func(component);
     }
 }

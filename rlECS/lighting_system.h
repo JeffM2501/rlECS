@@ -28,14 +28,26 @@
 
 #pragma once
 
+#include "system_manager.h"
+
 #include "stdint.h"
 #include "raylib.h"
 
-namespace LightingSystem
+#include <set>
+
+class LightingSystem : public System
 {
+public:
+    DEFINE_SYSTEM(LightingSystem);
+
     Shader& GetShader();
 
     void Setup();
     void Update(uint64_t cameraEntity);
     void UpdateLights();
-}
+
+private:
+    Shader LightShader;
+
+    std::set<int> UsedLightIds;
+};

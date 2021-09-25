@@ -32,79 +32,72 @@
 #include "transform_component.h"
 
 #include "raylib.h"
-#include <set>
 
-namespace LightingSystem
-{
-    Shader LightShader;
-
-    std::set<int> UsedLightIds;
 
 #define GLSL_VERSION            330
 #define MAX_LIGHTS              4         // Max dynamic lights supported by shader
 
-    Shader& GetShader()
+Shader& LightingSystem::GetShader()
+{
+    return LightShader;
+}
+
+void LightingSystem::Setup()
+{
+    LightShader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION),
+        TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
+        
+    LightShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(LightShader, "viewPos");
+
+    // Ambient light level (some basic lighting)
+    int ambientLoc = GetShaderLocation(LightShader, "ambient");
+        
+    float color[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+
+    SetShaderValue(LightShader, ambientLoc, color, SHADER_UNIFORM_VEC4);
+
+    // disable all lights
+    char enabledName[32] = "lights[x].enabled\0";
+    for (int i = 0; i < MAX_LIGHTS; i++)
     {
-        return LightShader;
+        enabledName[7] = '0' + i;
+
+        auto loc = GetShaderLocation(LightShader, enabledName);
+        int val = 0;
+        SetShaderValue(LightShader, loc, &val, SHADER_UNIFORM_INT);
     }
+}
 
-    void Setup()
-    {
-        LightShader = LoadShader(TextFormat("resources/shaders/glsl%i/base_lighting.vs", GLSL_VERSION),
-            TextFormat("resources/shaders/glsl%i/lighting.fs", GLSL_VERSION));
-        
-        LightShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(LightShader, "viewPos");
-
-        // Ambient light level (some basic lighting)
-        int ambientLoc = GetShaderLocation(LightShader, "ambient");
-        
-        float color[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
-
-        SetShaderValue(LightShader, ambientLoc, color, SHADER_UNIFORM_VEC4);
-
-        // disable all lights
-        char enabledName[32] = "lights[x].enabled\0";
-        for (int i = 0; i < MAX_LIGHTS; i++)
+void LightingSystem::UpdateLights()
+{
+    Entities.DoForEachEntity<LightComponent>([this](LightComponent* light)
         {
-            enabledName[7] = '0' + i;
+            if (!light->LightEnabled || !light->Active)
+                return;
 
-            auto loc = GetShaderLocation(LightShader, enabledName);
-            int val = 0;
-            SetShaderValue(LightShader, loc, &val, SHADER_UNIFORM_INT);
-        }
-    }
-
-    void UpdateLights()
-    {
-        ComponentManager::DoForEachEntity<LightComponent>([](LightComponent* light)
+            if (!light->IsSetup())
             {
-                if (!light->LightEnabled || !light->Active)
-                    return;
-
-                if (!light->IsSetup())
+                int id = 0;
+                while (UsedLightIds.find(id) != UsedLightIds.end())
                 {
-                    int id = 0;
-                    while (UsedLightIds.find(id) != UsedLightIds.end())
-                    {
-                        id++;
-                        if (id > MAX_LIGHTS)
-                            return;
-                    }
-                    UsedLightIds.insert(id);
-                    light->Setup(id, LightShader);
+                    id++;
+                    if (id > MAX_LIGHTS)
+                        return;
                 }
-                else
-                {
-                    light->Update(LightShader);
-                }
-            });
-    }
+                UsedLightIds.insert(id);
+                light->Setup(id, LightShader);
+            }
+            else
+            {
+                light->Update(LightShader);
+            }
+        });
+}
 
-    void Update(uint64_t cameraEntity)
-    {
-        auto* transform = ComponentManager::MustGetComponent<TransformComponent>(cameraEntity);
-        Vector3 cameraPos = transform->GetWorldPosition();
-        float p[3] = { cameraPos.x,cameraPos.y,cameraPos.z };
-        SetShaderValue(LightShader, LightShader.locs[SHADER_LOC_VECTOR_VIEW], p, SHADER_UNIFORM_VEC3);
-    }
+void LightingSystem::Update(uint64_t cameraEntity)
+{
+    auto* transform = Entities.MustGetComponent<TransformComponent>(cameraEntity);
+    Vector3 cameraPos = transform->GetWorldPosition();
+    float p[3] = { cameraPos.x,cameraPos.y,cameraPos.z };
+    SetShaderValue(LightShader, LightShader.locs[SHADER_LOC_VECTOR_VIEW], p, SHADER_UNIFORM_VEC3);
 }
