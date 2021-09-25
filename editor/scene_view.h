@@ -32,7 +32,7 @@
 
 #include "main_view.h"
 
-#include "entity.h"
+#include "entity_manager.h"
 #include "system_manager.h"
 
 class SceneView : public ThreeDView

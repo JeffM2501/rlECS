@@ -35,84 +35,10 @@
 #include <map>
 
 class EntitySet;
+class Component;
 
-class Component
-{
-public:
-    uint64_t EntityId;
-    bool Active = true;
-
-public:
-    Component(uint64_t id, EntitySet& entities) 
-    : EntityId(id) 
-    , Entities(entities)
-    {}
-
-    virtual ~Component() = default;
-    virtual size_t Id() { return 0; }
-    virtual size_t TypeId() { return 0; }
-    virtual const char* ComponentName() { return nullptr; }
-
-    virtual void OnCreate() {}
-    virtual void OnDestory() {}
-    virtual void OnUpdate() {}
-
-    inline bool WantUpdate() { return NeedUpdate; }
-
-protected:
-    bool NeedUpdate = false;
-    EntitySet& Entities;
-};
 
 using ComponentList = std::vector<Component*>;
-
-#define DEFINE_COMPONENT(TYPE) \
-    TYPE(uint64_t id, EntitySet& entities) : Component(id, entities) {} \
-    static size_t GetComponentId() { return reinterpret_cast<size_t>(#TYPE); } \
-    static const char* GetComponentName() { return #TYPE; } \
-    size_t Id() override { return TYPE::GetComponentId(); } \
-    const char* ComponentName() override { return #TYPE; } \
-    static TYPE* Factory(uint64_t id, EntitySet& entities) { return new TYPE(id, entities); }
-
-#define DEFINE_DERIVED_COMPONENT(TYPE, BASETYPE) \
-    TYPE(uint64_t id, EntitySet& entities) : BASETYPE(id, entities) {} \
-    static size_t GetComponentId() { return reinterpret_cast<size_t>(#BASETYPE); } \
-    static const char* GetComponentName() { return #TYPE; } \
-    size_t Id() override { return TYPE::GetComponentId(); } \
-    const char* ComponentName() override { return #TYPE; } \
-    static TYPE* Factory(uint64_t id, EntitySet& entities) { return new TYPE(id, entities); }
-
-using ComponentFactory = std::function<Component* (uint64_t, EntitySet&)>;
-
-namespace ComponentManager
-{
-    void Register(size_t typeId, const char* name, ComponentFactory factory);
-    Component* Create(size_t typeId, uint64_t entityId, EntitySet& manager);
-    Component* Create(const char* typeName, uint64_t entityId, EntitySet& manager);
-
-    template<class T>
-    void Register()
-    {
-        Register(T::GetComponentId(), T::GetComponentName(), T::Factory);
-    }
-
-    template<class T>
-    T* Create(uint64_t entityId, EntitySet& entities)
-    {
-        Component* comp = Create(T::GetComponentId(), entityId, entities);
-        if (comp == nullptr)
-        {
-            // auto register
-            Register<T>();
-            comp = Create(T::GetComponentId(), entityId, entities);
-        }
-
-        if (comp == nullptr)
-            return nullptr;
-
-        return static_cast<T*>(comp);
-    }
-}
 
 class ComponentTable
 {
@@ -251,3 +177,97 @@ public:
         return AddComponent<T>(component->EntityId);
     }
 };
+
+class Component
+{
+protected:
+    bool NeedUpdate = false;
+    EntitySet& Entities;
+
+public:
+    uint64_t EntityId;
+    bool Active = true;
+
+public:
+    Component(uint64_t id, EntitySet& entities) 
+    : EntityId(id) 
+    , Entities(entities)
+    {}
+
+    virtual ~Component() = default;
+    virtual size_t Id() { return 0; }
+    virtual size_t TypeId() { return 0; }
+    virtual const char* ComponentName() { return nullptr; }
+
+    virtual void OnCreate() {}
+    virtual void OnDestory() {}
+    virtual void OnUpdate() {}
+
+    inline bool WantUpdate() { return NeedUpdate; }
+
+    template<class T>
+    inline T* GetComponent()
+    {
+        return Entities.GetComponent<T>(this);
+    }
+
+    template<class T>
+    inline T* MustGetComponent()
+    {
+        return Entities.MustGetComponent<T>(this);
+    }
+
+    template<class T>
+    inline T* MustGetComponent(uint64_t id)
+    {
+        return Entities.MustGetComponent<T>(id);
+    }
+};
+
+#define DEFINE_COMPONENT(TYPE) \
+    TYPE(uint64_t id, EntitySet& entities) : Component(id, entities) {} \
+    static size_t GetComponentId() { return reinterpret_cast<size_t>(#TYPE); } \
+    static const char* GetComponentName() { return #TYPE; } \
+    size_t Id() override { return TYPE::GetComponentId(); } \
+    const char* ComponentName() override { return #TYPE; } \
+    static TYPE* Factory(uint64_t id, EntitySet& entities) { return new TYPE(id, entities); }
+
+#define DEFINE_DERIVED_COMPONENT(TYPE, BASETYPE) \
+    TYPE(uint64_t id, EntitySet& entities) : BASETYPE(id, entities) {} \
+    static size_t GetComponentId() { return reinterpret_cast<size_t>(#BASETYPE); } \
+    static const char* GetComponentName() { return #TYPE; } \
+    size_t Id() override { return TYPE::GetComponentId(); } \
+    const char* ComponentName() override { return #TYPE; } \
+    static TYPE* Factory(uint64_t id, EntitySet& entities) { return new TYPE(id, entities); }
+
+using ComponentFactory = std::function<Component* (uint64_t, EntitySet&)>;
+
+namespace ComponentManager
+{
+    void Register(size_t typeId, const char* name, ComponentFactory factory);
+    Component* Create(size_t typeId, uint64_t entityId, EntitySet& manager);
+    Component* Create(const char* typeName, uint64_t entityId, EntitySet& manager);
+
+    template<class T>
+    inline void Register()
+    {
+        Register(T::GetComponentId(), T::GetComponentName(), T::Factory);
+    }
+
+    template<class T>
+    inline T* Create(uint64_t entityId, EntitySet& entities)
+    {
+        Component* comp = Create(T::GetComponentId(), entityId, entities);
+        if (comp == nullptr)
+        {
+            // auto register
+            Register<T>();
+            comp = Create(T::GetComponentId(), entityId, entities);
+        }
+
+        if (comp == nullptr)
+            return nullptr;
+
+        return static_cast<T*>(comp);
+    }
+}

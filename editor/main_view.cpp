@@ -231,18 +231,18 @@ void ThreeDView::DrawDefaultScene()
 {
     DrawSkybox();
 
-    float planeSize = 25.0f;
+    float planeSize = 50.0f;
 
     rlDisableDepthTest();
 
     if (ShowGround)
     {
-        DrawPlane(Vector3Zero(), Vector2{ (float)planeSize, (float)planeSize }, Colors::Brown);
+        DrawPlane(Vector3Zero(), Vector2{ (float)planeSize, (float)planeSize }, Colors::Beige);
     }
 
     if (ShowOrigin)
     {
-        DrawUtils::DrawGridXZ(Vector3Zero(), planeSize, 1, Colors::Beige, Colors::DarkBrown);
+        DrawUtils::DrawGridXZ(Vector3Zero(), planeSize, 1, ColorAlpha(Colors::RayWhite, 0.75f), ColorAlpha(Colors::DarkGray, 0.5f));
         rlSetLineWidth(2.0f);
     }
 
@@ -256,7 +256,6 @@ void ThreeDView::DrawDefaultScene()
     rlSetLineWidth(1.0f);
     rlEnableDepthTest();
 }
-
 
 // 2dView
 void TwoDView::Setup()

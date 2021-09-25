@@ -26,7 +26,7 @@
 *
 **********************************************************************************************/
 
-#include "entity.h"
+#include "entity_manager.h"
 
 #include <algorithm>
 #include <map>
@@ -39,24 +39,6 @@ struct ComponentInfo
 };
 
 std::map<size_t, ComponentInfo> ComponentFactories;
-
-// template<class T>
-// inline T* Component::GetComponent()
-// {
-//     return Entitites.GetComponent<T>(this);
-// }
-// 
-// template<class T>
-// inline T* Component::MustGetComponent()
-// {
-//     return Entitites.MustGetComponent<T>(this);
-// }
-// 
-// template<class T>
-// inline T* Component::MustGetComponent(uint64_t id)
-// {
-//     return Entitites.MustGetComponent<T>(id);
-// }
 
 
 namespace ComponentManager

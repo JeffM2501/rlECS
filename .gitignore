@@ -348,3 +348,14 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+/build/raylib.vcxproj
+/build/raylib.vcxproj.filters
+/clip/clip.vcxproj
+/clip/clip.vcxproj.filters
+/editor.vcxproj
+/editor.vcxproj.filters
+/imgui.ini
+/premake5.exe
+/rlECS.sln
+/rlECS/rlECS.vcxproj
+/rlECS/rlECS.vcxproj.filters

@@ -54,9 +54,9 @@ void SceneView::OnSetup()
 
     // create a light
     auto* light = Entities.AddComponent<LightComponent>();
-    auto* lightTransform = Entities.MustGetComponent<TransformComponent>(light);
+    auto* lightTransform = light->MustGetComponent<TransformComponent>();
     lightTransform->SetPosition(10, 10, 10);
-    Entities.MustGetComponent<ShapeComponent>(lightTransform)->ObjectShape = DrawShape::Sphere;
+    lightTransform->MustGetComponent<ShapeComponent>()->ObjectShape = DrawShape::Sphere;
 
     // editor camera
     TransformComponent* camera = Entities.AddComponent<TransformComponent>();

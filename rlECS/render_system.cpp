@@ -42,7 +42,7 @@ void RenderSystem::Begin(uint64_t cameraEntityId)
     ViewCam.fovy = 45;
 
     // a camera entity must have a the transform component, if it doesn't we add one and get the default
-    TransformComponent* cameraTransform = Entities.MustGetComponent<TransformComponent>(camera);
+    TransformComponent* cameraTransform = camera->MustGetComponent<TransformComponent>();
 
     // copy the transform vectors to the raylib camera
     ViewCam.position = cameraTransform->GetPosition();

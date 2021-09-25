@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "components.h"
+#include "entity_manager.h"
 
 #include "raylib.h"
 

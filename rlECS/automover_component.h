@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "entity.h"
+#include "entity_manager.h"
 #include "transform_component.h"
 
 #include "raylib.h"
@@ -50,7 +50,7 @@ public:
 
     inline void OnUpdate()
     {
-        TransformComponent* transform = Entities.MustGetComponent<TransformComponent>(this);
+        TransformComponent* transform = MustGetComponent<TransformComponent>();
 
         float delta = GetFrameTime();
 

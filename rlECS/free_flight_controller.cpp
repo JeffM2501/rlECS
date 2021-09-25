@@ -38,7 +38,7 @@ void FreeFlightController::Update(TransformComponent* toMove)
     if (toMove == nullptr)
         return;
 
-    FlightDataComponent* flightData = Entities.MustGetComponent<FlightDataComponent>(toMove);
+    FlightDataComponent* flightData = toMove->MustGetComponent<FlightDataComponent>();
 
     float speed = flightData->Speed * GetFrameTime();
 

@@ -1,9 +1,3 @@
-#pragma once
-
-#include "components.h"
-#include "transform_component.h"
-
-#include "raylib.h"
 /**********************************************************************************************
 *
 *   raylib_ECS_sample * a sample Entity Component System using raylib
@@ -31,11 +25,14 @@
 *   SOFTWARE.
 *
 **********************************************************************************************/
+#pragma once
+
+#include "entity_manager.h"
+#include "transform_component.h"
 
 #include "raymath.h"
 #include "rlgl.h"
 
-#include "entity.h"
 
 class DrawableComponent : public Component
 {

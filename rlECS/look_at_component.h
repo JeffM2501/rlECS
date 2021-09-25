@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "entity.h"
+#include "entity_manager.h"
 #include "transform_component.h"
 
 #include "raylib.h"
@@ -58,9 +58,9 @@ public:
         if (TargetEntityId == uint64_t(-1))
             return;
 
-        TransformComponent* selfTransform = Entities.MustGetComponent<TransformComponent>(this);
+        TransformComponent* selfTransform = MustGetComponent<TransformComponent>();
 
-        TransformComponent* taretTransform = Entities.MustGetComponent<TransformComponent>(TargetEntityId);
+        TransformComponent* taretTransform = MustGetComponent<TransformComponent>(TargetEntityId);
 
         Vector3 targetPos = Vector3Transform(Vector3Zero(), taretTransform->GetWorldMatrix());
 
