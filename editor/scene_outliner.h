@@ -30,38 +30,39 @@
 
 #pragma once
 
-#include "main_view.h"
-#include "scene_outliner.h"
 #include "entity_manager.h"
-#include "system_manager.h"
+#include "ui_window.h"
 
-#include <memory>
+#include <functional>
+#include <set>
 
-class SceneView : public ThreeDView
+constexpr char SceneOutlinerWindowName[] = " Scene Outline###rlECSSceneOutlinerWindow";
+
+class EntitySelection
 {
-protected:
+private:
+    std::set<EntityId_t> Selection;
 
 public:
-    SceneView() 
-    : Systems(Entities)
-    {}
+    bool IsSelected(EntityId_t id);
+    void Select(EntityId_t id, bool selected = true, bool add = false);
 
-    inline const char* GetName() override { return "Scene View"; }
+    const std::set<EntityId_t> GetSelection();
 
-    void OnSetup() override;
-    void OnUpdate() override;
-    void OnShutdown() override;
-    void OnShow(const Rectangle& contentArea) override;
+    void DoForEach(std::function<void(EntityId_t)>func);
+};
 
+class SceneOutliner : public UIWindow
+{
 protected:
-    uint64_t EditorCamera = 0;
+    EntitySet& Entities;
 
-    EntitySet Entities;
-    SystemSet Systems;
+public:
+    SceneOutliner(EntitySet& entities);
+    void GetName(std::string& name, MainView* view) const override;
+    const char* GetMenuName() const override;
+    void ShowEntityNode(EntityId_t entityId);
+    void OnShow(MainView* view) override;
 
-    std::shared_ptr<SceneOutliner> Outliner;
-
-protected:
-    void OnStartFrameCamera(const Rectangle& contentArea) override;
-    void OnEndFrameCamera() override;
+    EntitySelection Selection;
 };

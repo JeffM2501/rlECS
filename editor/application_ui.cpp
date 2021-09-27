@@ -28,11 +28,15 @@
 *
 **********************************************************************************************/
 
+#include "application_context.h"
 #include "application_ui.h"
 #include "common_utils.h"
 #include "inspector_window.h"
+#include "scene_outliner.h"
 #include "platform_tools.h"
 #include "ui_window.h"
+#include "main_view.h"
+#include "scene_view.h"
 
 #include "RLAssets.h"
 #include "raylib.h"
@@ -139,10 +143,12 @@ void UIManager::SetupUI()
     if (rootNode == nullptr || rootNode->ChildNodes[0] == nullptr)
     {
         ImGuiID centralNode = DockspaceId;
+        auto leftId = ImGui::DockBuilderSplitNode(centralNode, ImGuiDir_Left, 0.25f, nullptr, &centralNode);
         auto rightId = ImGui::DockBuilderSplitNode(centralNode, ImGuiDir_Right, 0.25f, nullptr, &centralNode);
 
         auto childId = ImGui::DockBuilderSplitNode(centralNode, ImGuiDir_Down, 0.25f, nullptr, nullptr);
 
+        ImGui::DockBuilderDockWindow(SceneOutlinerWindowName, leftId);
         ImGui::DockBuilderDockWindow(InspectorWindowName, rightId);
         ImGui::DockBuilderDockWindow(LogWindowName, childId);
     }

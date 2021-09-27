@@ -31,7 +31,6 @@
 #pragma once
 
 #include "application_ui.h"
-#include "scene_view.h"
 
 #include "RLAssets.h"
 #include "imgui.h"
@@ -40,6 +39,7 @@
 #include <string>
 
 class MainView;
+class SceneView;
 
 class ApplicationPrefs
 {

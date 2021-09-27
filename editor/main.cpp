@@ -31,6 +31,7 @@
 #include "application_context.h"
 #include "application_ui.h"
 #include "main_view.h"
+#include "scene_view.h"
 
 #include "platform_tools.h"
 
@@ -123,7 +124,7 @@ int main(int argc, char* argv[])
         flags |= FLAG_WINDOW_MAXIMIZED;
 
     SetConfigFlags(flags);
-    InitWindow(GlobalContext.Prefs.WindowWidth, GlobalContext.Prefs.WindowHeight, "TestBed Application");
+    InitWindow(GlobalContext.Prefs.WindowWidth, GlobalContext.Prefs.WindowHeight, "rlECS Editor");
    
     if (GlobalContext.Prefs.Maximized)
         MaximizeWindow();

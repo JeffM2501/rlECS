@@ -48,28 +48,37 @@
 
 void SceneView::OnSetup()
 {
+    Outliner = std::make_shared<SceneOutliner>(Entities);
+    GlobalContext.UI.AddWindow(Outliner);
+
     ShowGround = false;
+
+    // scene defaults
+    // 
+    // editor camera
+    TransformComponent* camera = Entities.AddComponent<TransformComponent>();
+    camera->GetEntity().Name = "Editor Camera";
+    Entities.AddComponent<CameraComponent>(camera);
+    Entities.AddComponent<FlightDataComponent>(camera);
+
+    camera->SetPosition(0, 1.5f, -3);
+
+    EditorCamera = camera->EntityId;
 
     Systems.GetSystem<LightingSystem>()->Setup();
 
     // create a light
     auto* light = Entities.AddComponent<LightComponent>();
+    light->GetEntity().Name = "Default Light";
     auto* lightTransform = light->MustGetComponent<TransformComponent>();
     lightTransform->SetPosition(10, 10, 10);
     lightTransform->MustGetComponent<ShapeComponent>()->ObjectShape = DrawShape::Sphere;
 
-    // editor camera
-    TransformComponent* camera = Entities.AddComponent<TransformComponent>();
-    Entities.AddComponent<CameraComponent>(camera);
-    Entities.AddComponent<FlightDataComponent>(camera);
-
-    camera->SetPosition(0, 1.5f, -3);
-    
-    EditorCamera = camera->EntityId;
-
+    // test data
+    // 
     // basic entity
     TransformComponent* testEntity = Entities.AddComponent<TransformComponent>();
-
+    testEntity->GetEntity().Name = "Test Entity";
     testEntity->SetPosition(0, 0.5f, 0);
 
     // give it some geometry
@@ -80,6 +89,16 @@ void SceneView::OnSetup()
 
     AutoMoverComponent* mover = drawable->MustGetComponent<AutoMoverComponent>();
     mover->AngularSpeed.y = 90;
+
+    // child
+    TransformComponent* child = testEntity->AddChildComponent<TransformComponent>();
+    child->GetEntity().Name = "Child";
+    child->SetPosition(0, 1.0f, 0);
+    // body
+    drawable = Entities.AddComponent<ShapeComponent>(child);
+    drawable->ObjectColor = Colors::DarkBlue;
+    drawable->ObjectShape = DrawShape::Sphere;
+    drawable->ObjectSize = Vector3{ 0.5f,0.5f,0.5f };
 }
 
 void SceneView::OnStartFrameCamera(const Rectangle& contentArea)
@@ -104,7 +123,7 @@ void SceneView::OnUpdate()
 
 void SceneView::OnShutdown()
 {
-
+    GlobalContext.UI.RemoveWindow(Outliner);
 }
 
 void SceneView::OnShow(const Rectangle& contentArea)

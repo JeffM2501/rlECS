@@ -35,15 +35,15 @@
 class System
 {
 public:
-    System(EntitySet& entityManager)
-        :Entities(entityManager)
+    System(EntitySet& entities)
+        :Entities(entities)
     {
     }
     virtual size_t Id() { return 0; }
     virtual const char* SystemName() { return nullptr; }
 
 protected:
-    EntitySet Entities;
+    EntitySet& Entities;
 };
 
 #define DEFINE_SYSTEM(TYPE) \

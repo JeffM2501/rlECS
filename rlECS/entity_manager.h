@@ -31,19 +31,32 @@
 #include <stdint.h>
 #include <functional>
 #include <set>
+#include <string>
 #include <vector>
 #include <map>
 
+using EntityId_t = uint64_t;
+constexpr EntityId_t InvalidEntityId = uint64_t(-1);
+
+class Entity
+{
+public:
+    EntityId_t Id = InvalidEntityId;
+    std::string Name;
+
+    EntityId_t Parent = InvalidEntityId;
+    std::vector<EntityId_t> Children;
+};
+
 class EntitySet;
 class Component;
-
 
 using ComponentList = std::vector<Component*>;
 
 class ComponentTable
 {
 public:
-    std::map<uint64_t, ComponentList> Entities;
+    std::map<EntityId_t, ComponentList> Entities;
 
     virtual ~ComponentTable();
 
@@ -53,7 +66,9 @@ public:
 class EntitySet
 {
 private:
-    std::set<uint64_t> EntityMap;
+    std::map<EntityId_t, Entity> EntityMap;
+    std::set<EntityId_t> RootNodes;
+
     uint64_t NextEntity = 0;
 
     std::map<size_t, ComponentTable> ComponentDB;
@@ -61,21 +76,34 @@ private:
 
 private:
     Component* StoreComponent(size_t componentId, Component* component);
-    void EraseAllComponents(size_t componentId, uint64_t entityId);
+    void EraseAllComponents(size_t componentId, EntityId_t entityId);
     void EraseComponent(size_t componentId, Component* component);
-    Component* FindComponent(size_t componentId, uint64_t entityId);
-    const std::vector<Component*>& FindComponents(size_t componentId, uint64_t entityId);
+    Component* FindComponent(size_t componentId, EntityId_t entityId);
+    const std::vector<Component*>& FindComponents(size_t componentId, EntityId_t entityId);
+
+    void RemoveFromParent(Entity* entity);
 
 public:
-    uint64_t CreateEntity();
-    void RemoveEntity(uint64_t entityId);
+    EntityId_t CreateEntity();
+    void RemoveEntity(EntityId_t entityId, bool removeChildren = true);
+    Entity* GetEntity(EntityId_t id);
+
+    EntityId_t AddChild(EntityId_t id);
+    void ReparentEntity(EntityId_t id, EntityId_t newParent);
+
     void Update();
 
     /// <summary>
     /// Iterate all entities by Id
     /// </summary>
     /// <param name="func">Callback to run for every entity</param>
-    void DoForEachEntity(std::function<void(uint64_t)> func);
+    void DoForEachEntity(std::function<void(EntityId_t)> func, EntityId_t startWith = InvalidEntityId);
+
+    /// <summary>
+    /// Iterate the root entities by Id
+    /// </summary>
+    /// <param name="func">Callback to run for every entity</param>
+    void DoForEachRootEntity(std::function<void(EntityId_t)> func);
 
     /// <summary>
     /// Iterate all the entities with a component
@@ -89,7 +117,7 @@ public:
     /// </summary>
     /// <param name="entityId">The entity to itterate</param>
     /// <param name="func">the callback to run for every component on an entity</param>
-    void DoForEachComponentInEntity(uint64_t entityId, std::function<void(Component*)> func);
+    void DoForEachComponentInEntity(EntityId_t entityId, std::function<void(Component*)> func);
 
     /// <summary>
     /// Iterate all the entities with a component
@@ -102,8 +130,9 @@ public:
         DoForEachEntity(T::GetComponentId(), [func](Component* comp) {func(static_cast<T*>(comp)); });
     }
 
+
     template<class T>
-    inline T* AddComponent(uint64_t entityId)
+    inline T* AddComponent(EntityId_t entityId)
     {
         T* component = ComponentManager::Create<T>(entityId, *this);
         return static_cast<T*>(StoreComponent(component->Id(), component));
@@ -131,7 +160,7 @@ public:
     }
 
     template<class T>
-    inline void RemoveComponents(uint64_t entityId)
+    inline void RemoveComponents(EntityId_t entityId)
     {
         EraseAllComponents(T::GetComponentId(), entityId);
     }
@@ -146,7 +175,7 @@ public:
     }
 
     template<class T>
-    inline T* GetComponent(uint64_t entityId)
+    inline T* GetComponent(EntityId_t entityId)
     {
         return static_cast<T*>(FindComponent(T::GetComponentId(), entityId));
     }
@@ -158,7 +187,7 @@ public:
     }
 
     template<class T>
-    inline T* MustGetComponent(uint64_t entityId)
+    inline T* MustGetComponent(EntityId_t entityId)
     {
         T* newComponent = static_cast<T*>(FindComponent(T::GetComponentId(), entityId));
         if (newComponent != nullptr)
@@ -185,13 +214,13 @@ protected:
     EntitySet& Entities;
 
 public:
-    uint64_t EntityId;
+    EntityId_t EntityId;
     bool Active = true;
 
 public:
-    Component(uint64_t id, EntitySet& entities) 
-    : EntityId(id) 
-    , Entities(entities)
+    Component(EntityId_t id, EntitySet& entities)
+        : EntityId(id)
+        , Entities(entities)
     {}
 
     virtual ~Component() = default;
@@ -218,35 +247,59 @@ public:
     }
 
     template<class T>
-    inline T* MustGetComponent(uint64_t id)
+    inline T* MustGetComponent(EntityId_t id)
     {
+        if (id == InvalidEntityId)
+            return nullptr;
+
         return Entities.MustGetComponent<T>(id);
+    }
+
+    inline Entity& GetEntity()
+    {
+        return *Entities.GetEntity(EntityId);
+    }
+
+    inline EntityId_t GetParent()
+    {
+        return GetEntity().Parent;
+    }
+
+    inline EntityId_t AddChild()
+    {
+        return Entities.AddChild(EntityId);
+    }
+
+    template<class T>
+    inline T* AddChildComponent()
+    {
+        return Entities.MustGetComponent<T>(Entities.AddChild(EntityId));
     }
 };
 
 #define DEFINE_COMPONENT(TYPE) \
-    TYPE(uint64_t id, EntitySet& entities) : Component(id, entities) {} \
+    TYPE(EntityId_t id, EntitySet& entities) : Component(id, entities) {} \
     static size_t GetComponentId() { return reinterpret_cast<size_t>(#TYPE); } \
     static const char* GetComponentName() { return #TYPE; } \
     size_t Id() override { return TYPE::GetComponentId(); } \
     const char* ComponentName() override { return #TYPE; } \
-    static TYPE* Factory(uint64_t id, EntitySet& entities) { return new TYPE(id, entities); }
+    static TYPE* Factory(EntityId_t id, EntitySet& entities) { return new TYPE(id, entities); }
 
 #define DEFINE_DERIVED_COMPONENT(TYPE, BASETYPE) \
-    TYPE(uint64_t id, EntitySet& entities) : BASETYPE(id, entities) {} \
+    TYPE(EntityId_t id, EntitySet& entities) : BASETYPE(id, entities) {} \
     static size_t GetComponentId() { return reinterpret_cast<size_t>(#BASETYPE); } \
     static const char* GetComponentName() { return #TYPE; } \
     size_t Id() override { return TYPE::GetComponentId(); } \
     const char* ComponentName() override { return #TYPE; } \
-    static TYPE* Factory(uint64_t id, EntitySet& entities) { return new TYPE(id, entities); }
+    static TYPE* Factory(EntityId_t id, EntitySet& entities) { return new TYPE(id, entities); }
 
-using ComponentFactory = std::function<Component* (uint64_t, EntitySet&)>;
+using ComponentFactory = std::function<Component* (EntityId_t, EntitySet&)>;
 
 namespace ComponentManager
 {
     void Register(size_t typeId, const char* name, ComponentFactory factory);
-    Component* Create(size_t typeId, uint64_t entityId, EntitySet& manager);
-    Component* Create(const char* typeName, uint64_t entityId, EntitySet& manager);
+    Component* Create(size_t typeId, EntityId_t entityId, EntitySet& manager);
+    Component* Create(const char* typeName, EntityId_t entityId, EntitySet& manager);
 
     template<class T>
     inline void Register()
@@ -255,7 +308,7 @@ namespace ComponentManager
     }
 
     template<class T>
-    inline T* Create(uint64_t entityId, EntitySet& entities)
+    inline T* Create(EntityId_t entityId, EntitySet& entities)
     {
         Component* comp = Create(T::GetComponentId(), entityId, entities);
         if (comp == nullptr)

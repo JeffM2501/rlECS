@@ -35,7 +35,8 @@
 #include <deque>
 
 #include "application_context.h"
-#include "main_view.h"
+
+class MainView;
 
 class UIWindow
 {

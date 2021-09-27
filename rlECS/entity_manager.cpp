@@ -48,7 +48,7 @@ namespace ComponentManager
         ComponentFactories[typeId] = ComponentInfo{ typeId, name, factory };
     }
 
-    Component* Create(size_t typeId, uint64_t entityId, EntitySet& entities)
+    Component* Create(size_t typeId, EntityId_t entityId, EntitySet& entities)
     {
         std::map<size_t, ComponentInfo>::iterator itr = ComponentFactories.find(typeId);
         if (itr == ComponentFactories.end())
@@ -57,7 +57,7 @@ namespace ComponentManager
         return itr->second.Factory(entityId, entities);
     }
 
-    Component* Create(const char* typeName, uint64_t entityId, EntitySet& entities)
+    Component* Create(const char* typeName, EntityId_t entityId, EntitySet& entities)
     {
         for (auto itr : ComponentFactories)
         {
@@ -101,29 +101,110 @@ bool ComponentTable::Add(Component* component)
     return true;
 }
 
-uint64_t EntitySet::CreateEntity()
+EntityId_t EntitySet::CreateEntity()
 {
     while (EntityMap.find(NextEntity) != EntityMap.end())
         NextEntity++;
 
-    EntityMap.emplace(NextEntity);
+    EntityMap.emplace(NextEntity, Entity{ NextEntity });
+    RootNodes.insert(NextEntity);
     NextEntity++;
 
     return NextEntity - 1;
 }
 
-void EntitySet::RemoveEntity(uint64_t entityId)
+void EntitySet::RemoveFromParent(Entity* entity)
 {
-    for (auto componentTable : ComponentDB)
-    {
-        EraseAllComponents(componentTable.first, entityId);
-    }
+    if (entity == nullptr)
+        return;
 
+    auto* parent = GetEntity(entity->Parent);
+    if (parent != nullptr)
+    {
+        auto itr = std::find(parent->Children.begin(), parent->Children.end(), entity->Id);
+        if (itr != parent->Children.end())
+            parent->Children.erase(itr);
+    }
+}
+
+void EntitySet::RemoveEntity(EntityId_t entityId, bool removeChildren)
+{
     auto itr = EntityMap.find(entityId);
     if (itr == EntityMap.end())
         return;
 
+    Entity& entity = itr->second;
+
+    if (!removeChildren)
+    {
+        for (EntityId_t childId : entity.Children)
+        {
+            ReparentEntity(childId, entity.Parent);
+        }
+    }
+    else
+    {
+        for (EntityId_t childId : entity.Children)
+        {
+            RemoveEntity(childId, true);
+        }
+    }
+
+    for (auto componentTable : ComponentDB)
+    {
+        EraseAllComponents(componentTable.first, entityId);
+    }
+    if (entity.Parent == InvalidEntityId)
+        RootNodes.erase(entity.Parent);
+
+    RemoveFromParent(&entity);
+
     EntityMap.erase(itr);
+}
+
+Entity* EntitySet::GetEntity(EntityId_t id)
+{
+    auto itr = EntityMap.find(id);
+    if (itr == EntityMap.end())
+        return nullptr;
+
+    return &(itr->second);
+}
+
+EntityId_t EntitySet::AddChild(EntityId_t id)
+{
+    Entity* entity = GetEntity(id);
+    
+    EntityId_t childId = CreateEntity();
+    entity->Children.push_back(childId);
+
+    Entity* child = GetEntity(childId);
+    if (child->Parent == InvalidEntityId)
+        RootNodes.erase(childId);
+
+    child->Parent = id;
+
+    return childId;
+}
+
+void EntitySet::ReparentEntity(EntityId_t id, EntityId_t newParent)
+{
+    Entity* entity = GetEntity(id);
+    if (entity == nullptr || entity->Parent == newParent)
+        return;
+
+    if (entity->Parent == InvalidEntityId)
+        RootNodes.erase(id);
+
+    RemoveFromParent(entity);
+    entity->Parent = newParent;
+
+    if (entity->Parent == InvalidEntityId)
+        RootNodes.insert(id);
+
+    Entity* parent = GetEntity(newParent);
+    if (parent != nullptr)
+        parent->Children.push_back(id);
 }
 
 void EntitySet::Update()
@@ -135,9 +216,28 @@ void EntitySet::Update()
     }
 }
 
-void EntitySet::DoForEachEntity(std::function<void(uint64_t)> func)
+void EntitySet::DoForEachEntity(std::function<void(EntityId_t)> func, EntityId_t startWith)
 {
-    for (uint64_t entity : EntityMap)
+    if (startWith != InvalidEntityId)
+    {
+        Entity* entity = GetEntity(startWith);
+        if (entity == nullptr)
+            return;
+
+        func(entity->Id);
+        for (EntityId_t child : entity->Children)
+            DoForEachEntity(func, child);
+    }
+    else
+    {
+        for (auto entity : EntityMap)
+            func(entity.first);
+    }
+}
+
+void EntitySet::DoForEachRootEntity(std::function<void(EntityId_t)> func)
+{
+    for (EntityId_t entity : RootNodes)
         func(entity);
 }
 
@@ -156,7 +256,7 @@ Component* EntitySet::StoreComponent(size_t compId, Component* component)
     return component;
 }
 
-Component* EntitySet::FindComponent(size_t compId, uint64_t entityId)
+Component* EntitySet::FindComponent(size_t compId, EntityId_t entityId)
 {
     auto componentTableItr = ComponentDB.find(compId);
     if (componentTableItr == ComponentDB.end())
@@ -173,7 +273,7 @@ Component* EntitySet::FindComponent(size_t compId, uint64_t entityId)
 
 static std::vector<Component*> EmptyComponentList;
 
-const std::vector<Component*>& EntitySet::FindComponents(size_t compId, uint64_t entityId)
+const std::vector<Component*>& EntitySet::FindComponents(size_t compId, EntityId_t entityId)
 {
     auto componentTableItr = ComponentDB.find(compId);
     if (componentTableItr == ComponentDB.end())
@@ -188,7 +288,7 @@ const std::vector<Component*>& EntitySet::FindComponents(size_t compId, uint64_t
     return entityCacheItr->second;
 }
 
-void EntitySet::EraseAllComponents(size_t compId, uint64_t entityId)
+void EntitySet::EraseAllComponents(size_t compId, EntityId_t entityId)
 {
     auto componentTableItr = ComponentDB.find(compId);
     if (componentTableItr == ComponentDB.end())
@@ -252,7 +352,7 @@ void EntitySet::DoForEachEntity(size_t compId, std::function<void(Component*)> f
     }
 }
 
-void EntitySet::DoForEachComponentInEntity(uint64_t entityId, std::function<void(Component*)> func)
+void EntitySet::DoForEachComponentInEntity(EntityId_t entityId, std::function<void(Component*)> func)
 {
     for (auto componentTable : ComponentDB)
     {
