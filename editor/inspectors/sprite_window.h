@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -30,50 +30,28 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <deque>
+#include "application/ui_window.h"
 
-#include "application_context.h"
+#include "raylib.h"
 
-class MainView;
-
-class UIWindow
+class SpriteWindow : public UIWindow
 {
 public:
-    UIWindow() {}
-    virtual ~UIWindow(){}
+    SpriteWindow() : UIWindow()
+    {
+        Shown = false;
+        Name = "2D Window";
+    }
 
-    bool Shown = false;
-    inline virtual void GetName(std::string& name, MainView* view) const { name = "BaseWindow"; }
-    inline virtual const char* GetMenuName() const { return "Base"; }
+    void OnShow(MainView* view) override
+    {
+        Vector2 mouse = GetMousePosition();
+        ImGui::Text("Mouse X%.0f Y%.0f", mouse.x, mouse.y);
 
-    void Show(MainView* view = nullptr);
-
-    virtual void Update();
-    virtual void Resize();
-
-    virtual void Shutdown() {}
-
-protected:
-    virtual void OnShow(MainView* view) {}
-    std::string Name;
-};
-
-constexpr char LogWindowName[] = "Log###RaylibLogWindow";
-
-class LogWindow : public UIWindow
-{
-public:
-    LogWindow();
-    inline void GetName(std::string& name, MainView* view) const override { name = LogWindowName; }
-    inline const char* GetMenuName() const override { return "Log"; }
-    void OnShow(MainView* view) override;
-
-private:
-    std::deque<LogSink::LogItem> LogLines;
-
-    int ShowLevel = 0;
-
-    char FilterText[512] = { 0 };
+        Vector3 camPos = view->Camera.GetCameraPosition();
+        ImGui::TextUnformatted("Camera");
+        ImGui::Text("X % .2f Y % .2f Z % .2f", camPos.x, camPos.y, camPos.z);
+        Vector2 camAngles = view->Camera.GetViewAngles();
+        ImGui::Text("Yaw%.2f Pitch%.2f", camAngles.y, camAngles.x);
+    }
 };

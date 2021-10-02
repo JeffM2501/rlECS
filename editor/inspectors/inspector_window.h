@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -30,49 +30,52 @@
 
 #pragma once
 
+#include "application/ui_window.h"
+#include "outliner/scene_outliner.h"
+
+#include "scene.h"
+
 #include "raylib.h"
-#include "imgui.h"
+#include "rlImGui.h"
+#include "raylib.h"
 
-#include <vector>
-#include <memory>
+#include "IconsFontAwesome5.h"
 
-class UIWindow;
+#include <string>
+
 class MainView;
 
-class UIManager
+namespace Inspectors
+{
+    void ShowTextureInspector(const Texture& texture, float width = 0);
+    void ShowSetTextureFilter(const Texture& texture);
+    void ShowMeshInspector(const Mesh& mesh);
+    void ShowMaterialMapInspector(MaterialMap& materialMap);
+}
+
+constexpr char InspectorWindowName[] = " Inspector###RaylibInspectorWindow";
+
+class InspectorWindow : public UIWindow
 {
 public:
-    void Startup();
-    void Shutdown();
-    void Update();
-    void Show(MainView* view = nullptr);
-    void Resized();
+    InspectorWindow(SceneData& scene, EntitySelection& selection);
+    void GetName(std::string& name, MainView* view) const override;
+    const char* GetMenuName() const override;
+    void ShowCommonData(MainView* view) const;
+    void OnShow(MainView* view) override;
 
-    inline const Rectangle& GetContentArea() { return ContentArea; }
+    void Update() override;
 
-    void AddWindow(std::shared_ptr<UIWindow> window);
-    void RemoveWindow(std::shared_ptr<UIWindow> window);
-
-protected:
-    void SetupUI();
-    void ShowMenu();
+    SceneData& Scene;
 
 protected:
-    ImGuiID DockspaceId;
+    EntitySelection& Selection;
 
-    bool LogWindowOpen = true;
-  
-    std::vector<std::shared_ptr<UIWindow>> Windows;
+    // data cache
+    void ClearCache();
 
-private:
-    bool ShowStyleEditor = false;
-    bool ShowDemoWindow = false;
-    bool ShowMetricsWindow = false;
-    bool ShowAboutImGuiWindow = false;
-    bool ShowAboutWindow = false;
-
-    Rectangle ContentArea = { 0 };
+    std::string Name;
 
 private:
-    void ShowDebugWindows();
+    EntityId_t CurrentSelection = InvalidEntityId;
 };

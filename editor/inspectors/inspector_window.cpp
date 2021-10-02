@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -28,9 +28,10 @@
 *
 **********************************************************************************************/
 
-#include "inspector_window.h"
+#include "inspectors/inspector_window.h"
+#include "inspectors/component_inspector.h"
 
-#include "main_view.h"
+#include "view/main_view.h"
 
 namespace Inspectors
 {
@@ -109,14 +110,17 @@ namespace Inspectors
 }
 
 
-InspectorWindow::InspectorWindow() : UIWindow()
+InspectorWindow::InspectorWindow(SceneData& scene, EntitySelection& selection)
+    : UIWindow()
+    , Scene(scene)
+    , Selection(selection)
 {
     Shown = true;
 }
 
 void InspectorWindow::GetName(std::string& name, MainView* view) const
 {
-    name = view->GetName();
+    name = ICON_FA_BINOCULARS;
     name += InspectorWindowName;
 }
 
@@ -141,6 +145,51 @@ void InspectorWindow::ShowCommonData(MainView* view) const
 
 void InspectorWindow::OnShow(MainView* view)
 {
-    view->ShowInspectorContents(*this);
+    ShowCommonData(view);
+    ImGui::Separator();
+    if (CurrentSelection == InvalidEntityId)
+    {
+        ImGui::TextUnformatted(ICON_FA_BAN "  No Selection");
+        return;
+    }
+
+    Entity* entity = Scene.Entities.GetEntity(CurrentSelection);
+
+    char buffer[512];
+    strcpy(buffer, entity->Name.c_str());
+    if (ImGui::InputText("Name", buffer, 512))
+    {
+        Scene.Entities.GetEntity(CurrentSelection)->Name = buffer;
+    }
+ 
+     Scene.Entities.DoForEachComponentInEntity(CurrentSelection, [this](Component* component)
+         {
+              ComponentInspector* inspector = ComponentInspectorRegistry::Get(component->TypeId());
+              if (inspector != nullptr)
+                  inspector->Inspect(component);
+         });
+}
+
+void InspectorWindow::Update()
+{
+    EntityId_t id = InvalidEntityId;
+    if (!Selection.IsEmpty())
+        id = Selection.Begin();
+
+    if (id == CurrentSelection)
+        return;
+    ClearCache();
+
+    if (id == InvalidEntityId)
+        return;
+
+    CurrentSelection = id;
+    Name = Scene.Entities.GetEntity(id)->Name;
+}
+
+void InspectorWindow::ClearCache()
+{
+    CurrentSelection = InvalidEntityId;
+    Name.clear();
 }
 

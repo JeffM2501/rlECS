@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -30,10 +30,10 @@
 
 #pragma once
 
-#include "scene_outliner.h"
+#include "outliner/scene_outliner.h"
 
 #include "entity_manager.h"
-#include "ui_window.h"
+#include "application/ui_window.h"
 
 #include "raylib.h"
 #include "rlImGui.h"
@@ -71,7 +71,6 @@ void EntitySelection::DoForEach(std::function<void(EntityId_t)>func)
     for (EntityId_t id : Selection)
         func(id);
 }
-
 
 SceneOutliner::SceneOutliner(EntitySet& entities)
     : UIWindow()

@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -29,50 +29,34 @@
 **********************************************************************************************/
 
 #pragma once
-#include "raylib.h"
 
-#include <map>
+#include "view/main_view.h"
+#include "outliner/scene_outliner.h"
+#include "scene.h"
 
-class TextureInstance
+#include <memory>
+
+class SceneView : public ThreeDView
 {
+protected:
+
 public:
-    size_t RefCount = 0;
-    Texture2D Tx;
+    inline const char* GetName() override { return "Scene View"; }
+
+    void OnSetup() override;
+    void OnUpdate() override;
+    void OnShutdown() override;
+    void OnShow(const Rectangle& contentArea) override;
+    void OnShowOverlay(const Rectangle& contentArea) override;
+
+protected:
+    uint64_t EditorCamera = 0;
+
+    SceneData Scene;
+
+    std::shared_ptr<SceneOutliner> Outliner;
+
+protected:
+    void OnStartFrameCamera(const Rectangle& contentArea) override;
+    void OnEndFrameCamera() override;
 };
-
-class TextureManager
-{
-public:
-    std::map<int, TextureInstance> TextureCache;
-
-    void AddTexture(Texture tx)
-    {
-        if (TextureCache.find(tx.id) != TextureCache.end())
-            TextureCache[tx.id] = TextureInstance{ 0,tx };
-
-        TextureCache[tx.id].RefCount++;
-    }
-
-    void RemoveTexture(Texture tx)
-    {
-        std::map<int, TextureInstance>::iterator itr = TextureCache.find(tx.id);
-        if (itr == TextureCache.end())
-            return;
-
-        itr->second.RefCount--;
-        if (itr->second.RefCount <= 0)
-        {
-            UnloadTexture(itr->second.Tx);
-            TextureCache.erase(itr);
-        }
-    }
-
-    void Clear()
-    {
-        for (auto& tx : TextureCache)
-            UnloadTexture(tx.second.Tx);
-
-        TextureCache.clear();
-    }
-};
-

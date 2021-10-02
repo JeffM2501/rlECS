@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -30,28 +30,44 @@
 
 #pragma once
 
-#include "ui_window.h"
+#include "entity_manager.h"
+#include "application/ui_window.h"
 
-#include "raylib.h"
+#include "IconsFontAwesome5.h"
 
-class SpriteWindow : public UIWindow
+#include <functional>
+#include <set>
+
+constexpr char SceneOutlinerWindowName[] = ICON_FA_LIST_ALT " Scene Outline###rlECSSceneOutlinerWindow";
+
+class EntitySelection
 {
+private:
+    std::set<EntityId_t> Selection;
+
 public:
-    SpriteWindow() : UIWindow()
-    {
-        Shown = false;
-        Name = "2D Window";
-    }
+    bool IsSelected(EntityId_t id);
+    void Select(EntityId_t id, bool selected = true, bool add = false);
+    inline bool IsEmpty() { return Selection.empty(); }
 
-    void OnShow(MainView* view) override
-    {
-        Vector2 mouse = GetMousePosition();
-        ImGui::Text("Mouse X%.0f Y%.0f", mouse.x, mouse.y);
+    inline EntityId_t Begin() { return IsEmpty() ? InvalidEntityId : *Selection.begin(); }
 
-        Vector3 camPos = view->Camera.GetCameraPosition();
-        ImGui::TextUnformatted("Camera");
-        ImGui::Text("X % .2f Y % .2f Z % .2f", camPos.x, camPos.y, camPos.z);
-        Vector2 camAngles = view->Camera.GetViewAngles();
-        ImGui::Text("Yaw%.2f Pitch%.2f", camAngles.y, camAngles.x);
-    }
+    const std::set<EntityId_t> GetSelection();
+
+    void DoForEach(std::function<void(EntityId_t)>func);
+};
+
+class SceneOutliner : public UIWindow
+{
+protected:
+    EntitySet& Entities;
+
+public:
+    SceneOutliner(EntitySet& entities);
+    void GetName(std::string& name, MainView* view) const override;
+    const char* GetMenuName() const override;
+    void ShowEntityNode(EntityId_t entityId);
+    void OnShow(MainView* view) override;
+
+    EntitySelection Selection;
 };

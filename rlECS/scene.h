@@ -29,50 +29,19 @@
 #pragma once
 
 #include "entity_manager.h"
+#include "system_manager.h"
 
-#include <map>
-
-class System
+class SceneData
 {
 public:
-    System(EntitySet& entities)
-        :Entities(entities)
-    {
-    }
-    virtual void OnCreate() {}
-    virtual size_t Id() { return 0; }
-    virtual const char* SystemName() { return nullptr; }
+    bool Run = true;
 
-protected:
-    EntitySet& Entities;
-};
+    EntitySet Entities;
+    SystemSet Systems;
 
-#define DEFINE_SYSTEM(TYPE) \
-    TYPE(EntitySet& entities) : System(entities) { OnCreate(); } \
-    static size_t GetSystemId() { return reinterpret_cast<size_t>(#TYPE); } \
-    size_t Id() override { return TYPE::GetSystemId(); } \
-    const char* SystemName() override { return #TYPE; }
+    SceneData() : Systems(Entities) {}
 
-class SystemSet
-{
-public:
-    SystemSet(EntitySet& entities);
-    virtual ~SystemSet();
+    void SetupEditorBaseScene();
 
-    System* GetSystem(size_t id);
-    System* AddSystem(System* system);
-
-    template<class T>
-    inline T* GetSystem()
-    {
-        T* system = static_cast<T*>(GetSystem(T::GetSystemId()));
-        if (system != nullptr)
-            return system;
-
-        return static_cast<T*>(AddSystem(new T(this->Entitites)));
-    }
-
-private:
-    EntitySet& Entitites;
-    std::map<size_t, System*> SystemMap;
+    void SetupDefaultEntities();
 };

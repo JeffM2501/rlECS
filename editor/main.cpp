@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -28,12 +28,12 @@
 *
 **********************************************************************************************/
 
-#include "application_context.h"
-#include "application_ui.h"
-#include "main_view.h"
-#include "scene_view.h"
-
-#include "platform_tools.h"
+#include "application/application_context.h"
+#include "application/application_ui.h"
+#include "application/platform_tools.h"
+#include "inspectors/common_inspectors.h"
+#include "view/main_view.h"
+#include "view/scene_view.h"
 
 #include "raylib.h"
 #include "rlgl.h"
@@ -108,6 +108,27 @@ void ApplicationShutdown();
 bool ShowStartupLog = true;
 bool Start2D = false;
 
+void DrawOverlay()
+{
+    if (GlobalContext.View != nullptr)
+    {
+        ImGui::SetNextWindowPos(ImVec2(GlobalContext.View->LastContentArea.x, GlobalContext.View->LastContentArea.y));
+        ImGui::SetNextWindowSize(ImVec2(GlobalContext.View->LastContentArea.width, GlobalContext.View->LastContentArea.height));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+        if (ImGui::Begin("###ViewportOverlay", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+        {
+            if (ImGui::IsWindowHovered() && (ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right)))
+                ImGui::SetWindowFocus();
+
+            GlobalContext.View->OnShowOverlay(GlobalContext.View->LastContentArea);
+        }
+        ImGui::End();
+        ImGui::PopStyleVar(3);
+    }
+}
+
 #ifdef _WIN32
 int wWinMain(void* hInstance, void* hPrevInstance, char* cmdLine, int show)
 #else
@@ -130,7 +151,7 @@ int main(int argc, char* argv[])
         MaximizeWindow();
 
     ApplicationStartup();
-
+    RegisterCommonInspectors();
 
     GlobalContext.ChangeView(new SceneView());
     GlobalContext.UI.Startup();
@@ -165,6 +186,7 @@ int main(int argc, char* argv[])
 
         BeginRLImGui();
         GlobalContext.UI.Show(GlobalContext.View);
+        DrawOverlay();
         EndRLImGui();
 
         EndDrawing();
@@ -196,6 +218,7 @@ void ApplicationStartup()
     InitRLGLImGui();
 
     // load fonts here
+    AddRLImGuiIconFonts(12,true);
     FinishRLGLImguSetup();
 }
 

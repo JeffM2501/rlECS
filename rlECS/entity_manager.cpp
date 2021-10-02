@@ -354,13 +354,13 @@ void EntitySet::DoForEachEntity(size_t compId, std::function<void(Component*)> f
 
 void EntitySet::DoForEachComponentInEntity(EntityId_t entityId, std::function<void(Component*)> func)
 {
-    for (auto componentTable : ComponentDB)
-    {
-        auto entityItr = componentTable.second.Entities.find(entityId);
-        if (entityItr == componentTable.second.Entities.end())
-            continue;
+     for (auto& componentTable : ComponentDB)
+     {
+         auto entityItr = componentTable.second.Entities.find(entityId);
+         if (entityItr == componentTable.second.Entities.end())
+             continue;
 
-        for (Component* component : entityItr->second)
-            func(component);
-    }
+         for (Component* component : entityItr->second)
+             func(component);
+     }
 }

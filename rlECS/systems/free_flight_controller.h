@@ -31,6 +31,8 @@
 #include "system_manager.h"
 #include "components/transform_component.h"
 
+#include <functional>
+
 // an example system that works on one component at a time
 
 class FreeFlightController : public System
@@ -38,5 +40,12 @@ class FreeFlightController : public System
 public:
     DEFINE_SYSTEM(FreeFlightController);
 
+    inline void OnCreate() override { LastMousePos = GetMousePosition(); }
+
     void Update(TransformComponent* transform);
+
+    std::function<bool()> AllowMovement;
+
+protected:
+    Vector2 LastMousePos;
 };

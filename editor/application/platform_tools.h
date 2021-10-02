@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -30,39 +30,25 @@
 
 #pragma once
 
-#include "entity_manager.h"
-#include "ui_window.h"
+#include "raylib.h"
+#include <string>
+#include <vector>
 
-#include <functional>
-#include <set>
-
-constexpr char SceneOutlinerWindowName[] = " Scene Outline###rlECSSceneOutlinerWindow";
-
-class EntitySelection
+namespace PlatformTools
 {
-private:
-    std::set<EntityId_t> Selection;
+    enum class ClipboardFormats
+    {
+        Text,
+        PNG,
+    };
 
-public:
-    bool IsSelected(EntityId_t id);
-    void Select(EntityId_t id, bool selected = true, bool add = false);
+    void CopyImageToClipboard(Image& image);
 
-    const std::set<EntityId_t> GetSelection();
+    std::string ShowOpenFileDialog(const char* filename, std::vector<std::pair<std::string, std::string>> filterValues);
+    std::string ShowOpenFileDialog(const char* filename);
 
-    void DoForEach(std::function<void(EntityId_t)>func);
-};
+    std::string ShowSaveFileDialog(const char* filename, std::vector<std::pair<std::string, std::string>> filterValues);
+    std::string ShowSaveFileDialog(const char* filename);
 
-class SceneOutliner : public UIWindow
-{
-protected:
-    EntitySet& Entities;
-
-public:
-    SceneOutliner(EntitySet& entities);
-    void GetName(std::string& name, MainView* view) const override;
-    const char* GetMenuName() const override;
-    void ShowEntityNode(EntityId_t entityId);
-    void OnShow(MainView* view) override;
-
-    EntitySelection Selection;
-};
+    void SetWindowHandle(void* handle);
+}

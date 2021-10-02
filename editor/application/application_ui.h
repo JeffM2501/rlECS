@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -31,24 +31,54 @@
 #pragma once
 
 #include "raylib.h"
-#include <string>
+#include "imgui.h"
+
 #include <vector>
+#include <memory>
 
-namespace PlatformTools
+class UIWindow;
+class MainView;
+
+class UIManager
 {
-    enum class ClipboardFormats
+public:
+    void Startup();
+    void Shutdown();
+    void Update();
+    void Show(MainView* view = nullptr);
+    void Resized();
+
+    inline const Rectangle& GetContentArea() { return ContentArea; }
+
+    template<class T>
+    inline std::shared_ptr<T> AddWindow(std::shared_ptr<T> window)
     {
-        Text,
-        PNG,
-    };
+        Windows.emplace_back(window);
+        return window;
+    }
 
-    void CopyImageToClipboard(Image& image);
+    void RemoveWindow(std::shared_ptr<UIWindow> window);
 
-    std::string ShowOpenFileDialog(const char* filename, std::vector<std::pair<std::string, std::string>> filterValues);
-    std::string ShowOpenFileDialog(const char* filename);
+protected:
+    void SetupUI();
+    void ShowMenu();
 
-    std::string ShowSaveFileDialog(const char* filename, std::vector<std::pair<std::string, std::string>> filterValues);
-    std::string ShowSaveFileDialog(const char* filename);
+protected:
+    ImGuiID DockspaceId;
 
-    void SetWindowHandle(void* handle);
-}
+    bool LogWindowOpen = true;
+  
+    std::vector<std::shared_ptr<UIWindow>> Windows;
+
+private:
+    bool ShowStyleEditor = false;
+    bool ShowDemoWindow = false;
+    bool ShowMetricsWindow = false;
+    bool ShowAboutImGuiWindow = false;
+    bool ShowAboutWindow = false;
+
+    Rectangle ContentArea = { 0 };
+
+private:
+    void ShowDebugWindows();
+};

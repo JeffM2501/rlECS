@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -28,10 +28,10 @@
 *
 **********************************************************************************************/
 
-#include "main_view.h"
-#include "drawing_utils.h"
-#include "inspector_window.h"
-#include "platform_tools.h"
+#include "view/main_view.h"
+#include "graphics/drawing_utils.h"
+#include "inspectors/inspector_window.h"
+#include "application/platform_tools.h"
 
 #include "raylib.h"
 #include "rlgl.h"
@@ -57,6 +57,11 @@ void MainView::Show(const Rectangle& contentArea)
 {
     OnShow(contentArea);
     LastMousePos = GetMousePosition();
+}
+
+void MainView::OnShowOverlay(const Rectangle& contentArea)
+{
+
 }
 
 void MainView::ResizeContentArea(const Rectangle& contentArea)

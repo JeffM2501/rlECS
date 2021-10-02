@@ -35,8 +35,6 @@
 class FlightDataComponent : public Component
 {
 public:
-    Vector2 LastMousePos;
-
     float Speed = 10;
     float RotationSpeed = 180;
 
@@ -45,9 +43,4 @@ public:
 
 public:
     DEFINE_COMPONENT(FlightDataComponent);
-
-    inline void OnCreate() override
-    {
-        LastMousePos = GetMousePosition();
-    }
 };

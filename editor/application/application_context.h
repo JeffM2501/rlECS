@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "application_ui.h"
+#include "application/application_ui.h"
 
 #include "RLAssets.h"
 #include "imgui.h"

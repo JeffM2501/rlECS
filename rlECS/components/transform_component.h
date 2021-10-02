@@ -40,8 +40,7 @@ class TransformComponent : public Component
 {
 private:
     Vector3 Position = { 0 };
-    Vector3 Forward = { 0 , 0 , 1 };
-    Vector3 Up = { 0, 1 , 0 };
+    Quaternion Orientation = QuaternionIdentity();
 
     bool Dirty = true;
 
@@ -62,18 +61,46 @@ public:
         Matrix translateMatrix = MatrixTranslate(Position.x, Position.y, Position.z);
         Matrix orientationMatrix = MatrixMultiply(worldTransform, translateMatrix);
 
-        Forward = Vector3Transform(Vector3{ 0 , 1 , 0 }, WorldMatrix);
-        Up = Vector3Transform(Vector3{ 0, 0 , 1 }, WorldMatrix);
+        Orientation = QuaternionFromMatrix(WorldMatrix);
 
         Entities.ReparentEntity(EntityId, InvalidEntityId);
     }
 
+    void SetDirty()
+    {
+         Dirty = true;
+         for (EntityId_t childId : GetEntity().Children)
+         {
+             TransformComponent* childTransform = Entities.GetComponent<TransformComponent>(childId);
+             if (childTransform != nullptr)
+                 childTransform->SetDirty();
+         }
+    }
+
     const Vector3& GetPosition() const { return Position; }
-    const Vector3& GetForwardVector() const { return Forward; }
-    const Vector3& GetUpVector() const { return Up; }
+
+    inline Quaternion GetOrientation()
+    {
+        return Orientation;
+    }
+
+    inline Vector3 GetEulerAngles()
+    {
+        return QuaternionToEuler(Orientation);
+    }
+
+    inline Vector3 GetForwardVector() const
+    {
+        return Vector3RotateByQuaternion(Vector3{ 0, 0, 1 }, Orientation);
+    }
+
+    inline Vector3 GetUpVector() const
+    {
+        return Vector3RotateByQuaternion(Vector3{ 0, 1, 0 }, Orientation);
+    }
 
     inline Vector3 GetWorldPosition()
-    { 
+    {
         Matrix worldTransform = GetWorldMatrix();
         return Vector3Transform(Vector3Zero(), WorldMatrix);
     }
@@ -94,42 +121,37 @@ public:
         Position.x = x;
         Position.y = y;
         Position.z = z;
-        Dirty = true;
+        SetDirty();
     }
 
-    void SetDirty()
+    void SetPosition(const Vector3& pos)
     {
-        Dirty = true;
-        for (EntityId_t childId : GetEntity().Children)
-        {
-            TransformComponent* childTransform = Entities.GetComponent<TransformComponent>(childId);
-            if (childTransform != nullptr)
-                childTransform->SetDirty();
-        }  
+        Position = pos;
+        SetDirty();
+    }
+
+    void SetOrientation(const Vector3& eulerAngles)
+    {
+        Vector3 angles = Vector3Scale(eulerAngles, DEG2RAD);
+        Orientation = QuaternionFromEuler(angles.x, angles.y, angles.z);
+        SetDirty();
     }
 
     bool IsDirty()
     {
-        //EntityId_t parentId = GetParent();
-       // if (parentId == InvalidEntityId || Entities.GetComponent<TransformComponent>(parentId) == nullptr)
-            return Dirty;
-        
-       // TransformComponent* parentTransform = Entities.GetComponent<TransformComponent>(parentId);
-       // return parentTransform->IsDirty() || Dirty;
+        return Dirty;
     }
 
     void LookAt(const Vector3& target, const Vector3& up)
     {
         SetDirty();
-        Forward = Vector3Normalize(Vector3Subtract(target, Position));
-        Up = Vector3Normalize(up);
+        Matrix mat = MatrixLookAt(Position, target, up);
+        Orientation = QuaternionFromMatrix(mat);
     }
 
     Matrix GetLocalMatrix()
     {
-        Matrix orient = MatrixLookAt(Vector3Zero(), Forward, Up);
-        // keep local Z up
-        orient = MatrixMultiply(orient, MatrixRotateX(-90 * DEG2RAD));
+        Matrix orient = QuaternionToMatrix(Orientation);
         Matrix translation = MatrixTranslate(Position.x, Position.y, Position.z);
 
         return MatrixMultiply(MatrixInvert(orient), translation);
@@ -148,7 +170,7 @@ public:
 
         Dirty = false;
     }
-
+    
     const Matrix& GetWorldMatrix()
     {
         if (!IsDirty())
@@ -174,36 +196,36 @@ public:
 
     Vector3 GetLeftVector()
     {
-        return Vector3CrossProduct(Up, Forward);
+        return Vector3CrossProduct(GetUpVector(), GetForwardVector());
     }
 
     Vector3 GetRightVector()
     {
-        return Vector3CrossProduct(Forward, Up);
+        return Vector3CrossProduct(GetForwardVector(), GetUpVector());
     }
 
     void MoveUp(float distance)
     {
         SetDirty();
-        Position = Vector3Add(Position, Vector3Scale(Up, distance));
+        Position = Vector3Add(Position, Vector3Scale(GetUpVector(), distance));
     }
 
     void MoveDown(float distance)
     {
         SetDirty();
-        Position = Vector3Add(Position, Vector3Scale(Up, -distance));
+        Position = Vector3Add(Position, Vector3Scale(GetUpVector(), -distance));
     }
 
     void MoveForward(float distance)
     {
         SetDirty();
-        Position = Vector3Add(Position, Vector3Scale(Forward, distance));
+        Position = Vector3Add(Position, Vector3Scale(GetForwardVector(), distance));
     }
 
     void MoveBackwards(float distance)
     {
         SetDirty();
-        Position = Vector3Add(Position, Vector3Scale(Forward, -distance));
+        Position = Vector3Add(Position, Vector3Scale(GetForwardVector(), -distance));
     }
 
     void MoveLeft(float distance)
@@ -220,39 +242,29 @@ public:
     void RotateYaw(float angle)
     {
         SetDirty();
-        auto matrix = MatrixRotate(Up, DEG2RAD * angle);
-        Forward = Vector3Normalize(Vector3Transform(Forward, matrix));
+        auto rot = QuaternionFromEuler(0, -angle * DEG2RAD, 0);
+        Orientation = QuaternionMultiply(Orientation, rot);
     }
 
     void RotatePitch(float angle)
     {
         SetDirty();
-
-        angle = fmodf(angle, 360);
-        if (angle < 0)
-            angle += 360;
-        else if (angle > 360)
-            angle -= 360;
-
-        auto matrix = MatrixRotate(GetLeftVector(), DEG2RAD * angle);
-
-        Up = Vector3Normalize(Vector3Transform(Up, matrix));
-        Forward = Vector3Normalize(Vector3Transform(Forward, matrix));
+        auto rot = QuaternionFromEuler(angle * DEG2RAD, 0, 0);
+        Orientation = QuaternionMultiply(Orientation, rot);
     }
 
     void RotateRoll(float angle)
     {
         SetDirty();
-        auto matrix = MatrixRotate(Forward, DEG2RAD * angle);
-        Up = Vector3Normalize(Vector3Transform(Up, matrix));
+        auto rot = QuaternionFromEuler(0, 0, -angle * DEG2RAD);
+        Orientation = QuaternionMultiply(Orientation, rot);
     }
 
     void RotateHeading(float angle)
     {
         SetDirty();
-        Matrix matrix = MatrixRotateY(DEG2RAD * angle);
-        Up = Vector3Normalize(Vector3Transform(Up, matrix));
-        Forward = Vector3Normalize(Vector3Transform(Forward, matrix));
+        auto rot = QuaternionFromEuler(0, -angle * DEG2RAD, 0);
+        Orientation = QuaternionMultiply(rot, Orientation);
     }
 
     void PushMatrix()

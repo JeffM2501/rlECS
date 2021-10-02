@@ -255,6 +255,18 @@ public:
         return Entities.MustGetComponent<T>(id);
     }
 
+    template<class T>
+    inline T* AddComponent()
+    {
+        return Entities.MustGetComponent<T>(this);
+    }
+
+    template<class T>
+    inline T* AddComponent(EntityId_t id)
+    {
+        return Entities.MustGetComponent<T>(id);
+    }
+
     inline Entity& GetEntity()
     {
         return *Entities.GetEntity(EntityId);
@@ -280,16 +292,20 @@ public:
 #define DEFINE_COMPONENT(TYPE) \
     TYPE(EntityId_t id, EntitySet& entities) : Component(id, entities) {} \
     static size_t GetComponentId() { return reinterpret_cast<size_t>(#TYPE); } \
+    static size_t GetComponentTypeId() { return reinterpret_cast<size_t>(#TYPE); } \
     static const char* GetComponentName() { return #TYPE; } \
     size_t Id() override { return TYPE::GetComponentId(); } \
+    size_t TypeId() override { return TYPE::GetComponentTypeId(); } \
     const char* ComponentName() override { return #TYPE; } \
     static TYPE* Factory(EntityId_t id, EntitySet& entities) { return new TYPE(id, entities); }
 
 #define DEFINE_DERIVED_COMPONENT(TYPE, BASETYPE) \
     TYPE(EntityId_t id, EntitySet& entities) : BASETYPE(id, entities) {} \
     static size_t GetComponentId() { return reinterpret_cast<size_t>(#BASETYPE); } \
+    static size_t GetComponentTypeId() { return reinterpret_cast<size_t>(#TYPE); } \
     static const char* GetComponentName() { return #TYPE; } \
     size_t Id() override { return TYPE::GetComponentId(); } \
+    size_t TypeId() override { return TYPE::GetComponentTypeId(); } \
     const char* ComponentName() override { return #TYPE; } \
     static TYPE* Factory(EntityId_t id, EntitySet& entities) { return new TYPE(id, entities); }
 

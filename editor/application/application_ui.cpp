@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -28,15 +28,15 @@
 *
 **********************************************************************************************/
 
-#include "application_context.h"
-#include "application_ui.h"
+#include "application/application_context.h"
+#include "application/application_ui.h"
 #include "common_utils.h"
-#include "inspector_window.h"
-#include "scene_outliner.h"
-#include "platform_tools.h"
-#include "ui_window.h"
-#include "main_view.h"
-#include "scene_view.h"
+#include "inspectors/inspector_window.h"
+#include "outliner/scene_outliner.h"
+#include "application/platform_tools.h"
+#include "application/ui_window.h"
+#include "view/main_view.h"
+#include "view/scene_view.h"
 
 #include "RLAssets.h"
 #include "raylib.h"
@@ -54,7 +54,6 @@ void UIManager::Startup()
     ImGui::StyleColorsDark();
 
     AddWindow(std::make_shared<LogWindow>());
-    AddWindow(std::make_shared<InspectorWindow>());
 }
 
 void UIManager::Shutdown()
@@ -63,11 +62,6 @@ void UIManager::Shutdown()
         window->Shutdown();
 
     Windows.clear();
-}
-
-void UIManager::AddWindow(std::shared_ptr<UIWindow> window)
-{
-    Windows.emplace_back(window);
 }
 
 void UIManager::RemoveWindow(std::shared_ptr<UIWindow> window)

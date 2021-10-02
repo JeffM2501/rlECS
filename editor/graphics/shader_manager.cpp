@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -28,7 +28,7 @@
 *
 **********************************************************************************************/
 
-#include "shader_manager.h"
+#include "graphics/shader_manager.h"
 
 
 std::vector<std::string> GetFileLines(const char* fileName)

@@ -78,6 +78,7 @@ project "rlECS"
 		"rlECS/systems/*.cpp",
 		"rlECS/systems/*.h",
 	}
+	
 project "rlExtrasCPP"
 	kind "StaticLib"
 		
@@ -155,18 +156,28 @@ project "editor"
 	targetdir "bin/%{cfg.buildcfg}"
 	cppdialect "C++17"
 	
-	includedirs {"src"}
 	vpaths 
 	{
-		["Header Files"] = { "editor/*.h"},
-		["Source Files"] = {"editor/*.c", "editor/*.cpp"},
+		["Header Files"] = { "*.h"},
+		["Source Files"] = {"*.c", "*.cpp"},
 	}
 	files 
 	{
-		"editor/*.cpp",
-		"editor/*.h",
+		"editor/**.c",
+		"editor/**.cpp",
+		"editor/**.h",
+		"editor/application/*.cpp",
+		"editor/application/*.h",
+		"editor/graphics/*.cpp",
+		"editor/graphics/*.h",
+		"editor/inspectors/*.cpp",
+		"editor/inspectors/*.h",
+		"editor/outliner/*.cpp",
+		"editor/outliner/*.h",
+		"editor/view/*.cpp",
+		"editor/view/*.h",
 	}
-
+	
 	links {"raylib", "rlExtrasCPP", "rlImGui", "clip", "rlECS"}
 	
 	includedirs { "editor", "raylib/src", "raylibExtras/rlExtrasCPP",  "raylibExtras/rlImGui", "raylibExtras/imgui", "clip", "rlECS"}

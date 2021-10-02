@@ -2,7 +2,7 @@
 *
 *   raylibExtras * Utilities and Shared Components for Raylib
 *
-*   Testframe - a Raylib/ImGui test framework
+*   rlECS- a simple ECS in raylib with editor
 *
 *   LICENSE: ZLIB
 *
@@ -30,30 +30,52 @@
 
 #pragma once
 
-#include "ui_window.h"
+#include <memory>
+#include <string>
+#include <deque>
 
-#include "raylib.h"
-#include "rlImGui.h"
-#include "raylib.h"
+#include "application/application_context.h"
+
+#include "IconsFontAwesome5.h"
 
 class MainView;
 
-namespace Inspectors
-{
-    void ShowTextureInspector(const Texture& texture, float width = 0);
-    void ShowSetTextureFilter(const Texture& texture);
-    void ShowMeshInspector(const Mesh& mesh);
-    void ShowMaterialMapInspector(MaterialMap& materialMap);
-}
-
-constexpr char InspectorWindowName[] = " Inspector###RaylibInspectorWindow";
-
-class InspectorWindow : public UIWindow
+class UIWindow
 {
 public:
-    InspectorWindow();
-    void GetName(std::string& name, MainView* view) const override;
-    const char* GetMenuName() const override;
-    void ShowCommonData(MainView* view) const;
+    UIWindow() {}
+    virtual ~UIWindow(){}
+
+    bool Shown = false;
+    inline virtual void GetName(std::string& name, MainView* view) const { name = "BaseWindow"; }
+    inline virtual const char* GetMenuName() const { return "Base"; }
+
+    void Show(MainView* view = nullptr);
+
+    virtual void Update();
+    virtual void Resize();
+
+    virtual void Shutdown() {}
+
+protected:
+    virtual void OnShow(MainView* view) {}
+    std::string Name;
+};
+
+constexpr char LogWindowName[] = ICON_FA_EXCLAMATION_TRIANGLE "Log###RaylibLogWindow";
+
+class LogWindow : public UIWindow
+{
+public:
+    LogWindow();
+    inline void GetName(std::string& name, MainView* view) const override { name = LogWindowName; }
+    inline const char* GetMenuName() const override { return "Log"; }
     void OnShow(MainView* view) override;
+
+private:
+    std::deque<LogSink::LogItem> LogLines;
+
+    int ShowLevel = 0;
+
+    char FilterText[512] = { 0 };
 };
