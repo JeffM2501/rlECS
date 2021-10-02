@@ -91,6 +91,8 @@ public:
     EntityId_t AddChild(EntityId_t id);
     void ReparentEntity(EntityId_t id, EntityId_t newParent);
 
+    bool HasComponent(size_t componentId, EntityId_t entityId);
+
     void Update();
 
     /// <summary>
@@ -129,7 +131,6 @@ public:
     {
         DoForEachEntity(T::GetComponentId(), [func](Component* comp) {func(static_cast<T*>(comp)); });
     }
-
 
     template<class T>
     inline T* AddComponent(EntityId_t entityId)
@@ -311,16 +312,27 @@ public:
 
 using ComponentFactory = std::function<Component* (EntityId_t, EntitySet&)>;
 
+struct ComponentInfo
+{
+    size_t Id = 0;
+    const char* Name = nullptr;
+    ComponentFactory Factory = nullptr;
+    bool Unique = false;
+};
+
 namespace ComponentManager
 {
-    void Register(size_t typeId, const char* name, ComponentFactory factory);
+    void Register(size_t typeId, const char* name, ComponentFactory factory, bool unquie);
+
+    const std::map<size_t, ComponentInfo>& GetComponentList();
+
     Component* Create(size_t typeId, EntityId_t entityId, EntitySet& manager);
     Component* Create(const char* typeName, EntityId_t entityId, EntitySet& manager);
 
     template<class T>
-    inline void Register()
+    inline void Register(bool unique = false)
     {
-        Register(T::GetComponentId(), T::GetComponentName(), T::Factory);
+        Register(T::GetComponentId(), T::GetComponentName(), T::Factory, unique);
     }
 
     template<class T>

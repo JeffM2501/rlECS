@@ -31,6 +31,12 @@
 #include "application/application_context.h"
 #include "application/application_ui.h"
 #include "application/platform_tools.h"
+#include "components/automover_component.h"
+#include "components/camera_component.h"
+#include "components/drawable_component.h"
+#include "components/flight_data_component.h"
+#include "components/light_component.h"
+#include "components/look_at_component.h"
 #include "inspectors/common_inspectors.h"
 #include "view/main_view.h"
 #include "view/scene_view.h"
@@ -127,6 +133,17 @@ void DrawOverlay()
         ImGui::End();
         ImGui::PopStyleVar(3);
     }
+}
+
+void RegisterComponents()
+{
+    ComponentManager::Register<AutoMoverComponent>();
+    ComponentManager::Register<TransformComponent>();
+    ComponentManager::Register<CameraComponent>();
+    ComponentManager::Register<ShapeComponent>();
+    ComponentManager::Register<FlightDataComponent>();
+    ComponentManager::Register<LookAtComponent>();
+    ComponentManager::Register<LightComponent>();
 }
 
 #ifdef _WIN32

@@ -31,21 +31,19 @@
 #include <algorithm>
 #include <map>
 
-struct ComponentInfo
-{
-    size_t Id = 0;
-    const char* Name = nullptr;
-    ComponentFactory Factory = nullptr;
-};
 
 std::map<size_t, ComponentInfo> ComponentFactories;
 
-
 namespace ComponentManager
 {
-    void Register(size_t typeId, const char* name, ComponentFactory factory)
+    void Register(size_t typeId, const char* name, ComponentFactory factory, bool unquie)
     {
-        ComponentFactories[typeId] = ComponentInfo{ typeId, name, factory };
+        ComponentFactories[typeId] = ComponentInfo{ typeId, name, factory, unquie };
+    }
+
+    const std::map<size_t, ComponentInfo>& GetComponentList()
+    {
+        return ComponentFactories;
     }
 
     Component* Create(size_t typeId, EntityId_t entityId, EntitySet& entities)
@@ -269,6 +267,18 @@ Component* EntitySet::FindComponent(size_t compId, EntityId_t entityId)
         return nullptr;
 
     return entityCacheItr->second[0];
+}
+
+bool EntitySet::HasComponent(size_t componentId, EntityId_t entityId)
+{
+    auto componentTableItr = ComponentDB.find(componentId);
+    if (componentTableItr == ComponentDB.end())
+        return false;
+
+    ComponentTable& componentTable = componentTableItr->second;
+
+    auto entityCacheItr = componentTable.Entities.find(entityId);
+    return entityCacheItr != componentTable.Entities.end() && !entityCacheItr->second.empty();
 }
 
 static std::vector<Component*> EmptyComponentList;

@@ -69,13 +69,12 @@ public:
     SceneData& Scene;
 
 protected:
+    void ShowComponentPicker();
+
     EntitySelection& Selection;
-
-    // data cache
-    void ClearCache();
-
     std::string Name;
 
 private:
     EntityId_t CurrentSelection = InvalidEntityId;
+    size_t ComponentToAdd = 0;
 };

@@ -75,7 +75,6 @@ namespace Inspectors
         ImGui::SameLine();
         if (ImGui::Button("Mip"))
             GenTextureMipmaps((Texture*)&texture);
-
     }
 
     void ShowMeshInspector(const Mesh& mesh)
@@ -143,6 +142,39 @@ void InspectorWindow::ShowCommonData(MainView* view) const
     ImGui::Text("Mouse X%.0f Y%.0f", mouse.x, mouse.y);
 }
 
+void InspectorWindow::ShowComponentPicker()
+{
+    ImGui::SetNextWindowSize(ImVec2(300, 400));
+    if (ImGui::BeginPopupModal("ComponentList", nullptr, ImGuiWindowFlags_NoResize))
+    {
+      //  if (ImGui::BeginChild("ComponentList"))
+        {
+            for (auto& itr : ComponentManager::GetComponentList())
+            {
+                if (Scene.Entities.HasComponent(itr.second.Id, CurrentSelection) && itr.second.Unique)
+                    continue;
+
+                if (ImGui::Selectable(itr.second.Name, ComponentToAdd == itr.first))
+                {
+                    ComponentToAdd = itr.first;
+                }
+            }
+         //   ImGui::EndChild();
+        }
+
+        if (ImGui::Button("Ok"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
 void InspectorWindow::OnShow(MainView* view)
 {
     ShowCommonData(view);
@@ -155,6 +187,13 @@ void InspectorWindow::OnShow(MainView* view)
 
     Entity* entity = Scene.Entities.GetEntity(CurrentSelection);
 
+    if (ImGui::Button(ICON_FA_PLUS))
+    {
+        ImGui::OpenPopup("ComponentList");
+        ComponentToAdd = 0;
+    }
+    ShowComponentPicker();
+    
     char buffer[512];
     strcpy(buffer, entity->Name.c_str());
     if (ImGui::InputText("Name", buffer, 512))
@@ -162,12 +201,12 @@ void InspectorWindow::OnShow(MainView* view)
         Scene.Entities.GetEntity(CurrentSelection)->Name = buffer;
     }
  
-     Scene.Entities.DoForEachComponentInEntity(CurrentSelection, [this](Component* component)
-         {
-              ComponentInspector* inspector = ComponentInspectorRegistry::Get(component->TypeId());
-              if (inspector != nullptr)
-                  inspector->Inspect(component);
-         });
+    Scene.Entities.DoForEachComponentInEntity(CurrentSelection, [this](Component* component)
+        {
+            ComponentInspector* inspector = ComponentInspectorRegistry::Get(component->TypeId());
+            if (inspector != nullptr)
+                inspector->Inspect(component);
+        });
 }
 
 void InspectorWindow::Update()
@@ -178,18 +217,11 @@ void InspectorWindow::Update()
 
     if (id == CurrentSelection)
         return;
-    ClearCache();
 
     if (id == InvalidEntityId)
         return;
 
     CurrentSelection = id;
     Name = Scene.Entities.GetEntity(id)->Name;
-}
-
-void InspectorWindow::ClearCache()
-{
-    CurrentSelection = InvalidEntityId;
-    Name.clear();
 }
 

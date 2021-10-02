@@ -28,7 +28,7 @@ public:
             transform->SetPosition(pos);
 
         Vector3 rot = QuaternionToEuler(transform->GetOrientation());
-        if (ImGui::DragFloat3("Rotation", &rot.x, 0.1f, -180.0f, 180.0f))
+        if (ImGui::DragFloat3("Rotation", &rot.x, 0.25f, -180.0f, 180.0f))
             transform->SetOrientation(rot);
     }
 };
