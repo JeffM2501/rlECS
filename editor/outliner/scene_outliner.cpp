@@ -95,6 +95,8 @@ void SceneOutliner::ShowEntityNode(EntityId_t entityId)
         return;
 
     auto* entity = Entities.GetEntity(entityId);
+    if (entity == nullptr)
+        return;
 
     std::string displayName = entity->Name;
     if (displayName.empty())
@@ -104,31 +106,35 @@ void SceneOutliner::ShowEntityNode(EntityId_t entityId)
 
     float x = ImGui::GetCursorPosX();
 
-    if (entity->Children.empty())
+    bool toggle = ImGui::IsKeyDown(KEY_LEFT_CONTROL) || ImGui::IsKeyDown(KEY_RIGHT_CONTROL);
+
+    bool open = false;
+    if (!entity->Children.empty())
     {
-        if (ImGui::Selectable(displayName.c_str(), &selected, ImGuiSelectableFlags_None))
-            Selection.Select(entityId, selected, ImGui::IsKeyDown(KEY_LEFT_CONTROL) || ImGui::IsKeyDown(KEY_RIGHT_CONTROL));
-    }
-    else
-    {
-        bool open = ImGui::TreeNodeExV(&entityId, ImGuiTreeNodeFlags_DefaultOpen, "",0);
+        open = ImGui::TreeNodeExV(&entityId, ImGuiTreeNodeFlags_DefaultOpen, "", 0);
         ImGui::SameLine();
+    }
 
-        if (ImGui::Selectable(displayName.c_str(), &selected, ImGuiSelectableFlags_None))
-            Selection.Select(entityId, selected);
+    if (ImGui::Selectable(displayName.c_str(), &selected, ImGuiSelectableFlags_None) && (!Selection.IsSelected(entityId) || toggle))
+        Selection.Select(entityId, selected, toggle);
 
-        if (open)
-        {
-            for (EntityId_t child : Entities.GetEntity(entityId)->Children)
-                ShowEntityNode(child);
+    if (open)
+    {
+        for (EntityId_t child : Entities.GetEntity(entityId)->Children)
+            ShowEntityNode(child);
 
-            ImGui::TreePop();
-        }
+        ImGui::TreePop();
     }
 }
 
 void SceneOutliner::OnShow(MainView * view)
 {
+    if (ImGui::Button(ICON_FA_PLUS_SQUARE))
+    {
+        if (CreateEntityCallback != nullptr)
+            CreateEntityCallback(GetRootmostParent());
+    }
+
     if (ImGui::BeginChild("Root", ImVec2(ImGui::GetContentRegionAvailWidth(), ImGui::GetContentRegionAvail().y - 30), true))
     {
         bool selected = false;
@@ -140,5 +146,28 @@ void SceneOutliner::OnShow(MainView * view)
         }
         ImGui::EndChild();
     }
+}
+
+EntityId_t SceneOutliner::GetRootmostParent()
+{
+    size_t minDepth = size_t(-1);
+    EntityId_t minParent = InvalidEntityId;
+
+    for (EntityId_t id : Selection.GetSelection())
+    {
+        size_t count = Entities.GetParentCount(id);
+
+        // can't get any more root than this
+        if (count == 0)
+            return InvalidEntityId;
+
+        if (count < minDepth)
+        {
+            minDepth = count;
+            minParent = Entities.GetEntityParent(id);
+        }
+    }
+
+    return minParent;
 }
 

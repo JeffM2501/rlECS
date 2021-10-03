@@ -40,6 +40,7 @@
 #include "inspectors/common_inspectors.h"
 #include "view/main_view.h"
 #include "view/scene_view.h"
+#include "ui/imgui_dialogs.h"
 
 #include "raylib.h"
 #include "rlgl.h"
@@ -140,7 +141,7 @@ void RegisterComponents()
     ComponentManager::Register<AutoMoverComponent>();
     ComponentManager::Register<TransformComponent>();
     ComponentManager::Register<CameraComponent>();
-    ComponentManager::Register<ShapeComponent>();
+    ComponentManager::Register<ShapeComponent>(false);
     ComponentManager::Register<FlightDataComponent>();
     ComponentManager::Register<LookAtComponent>();
     ComponentManager::Register<LightComponent>();
@@ -168,6 +169,7 @@ int main(int argc, char* argv[])
         MaximizeWindow();
 
     ApplicationStartup();
+    RegisterComponents();
     RegisterCommonInspectors();
 
     GlobalContext.ChangeView(new SceneView());
@@ -204,6 +206,7 @@ int main(int argc, char* argv[])
         BeginRLImGui();
         GlobalContext.UI.Show(GlobalContext.View);
         DrawOverlay();
+        ImGui::UpdateDialogs();
         EndRLImGui();
 
         EndDrawing();
@@ -233,7 +236,6 @@ void ApplicationStartup()
     rlas_SetAssetRootPath("resources/",false);
 
     InitRLGLImGui();
-
     // load fonts here
     AddRLImGuiIconFonts(12,true);
     FinishRLGLImguSetup();

@@ -33,6 +33,9 @@
 
 #include "view/main_view.h"
 
+#include "ui/imgui_buttons.h"
+#include "ui/imgui_dialogs.h"
+
 namespace Inspectors
 {
     void ShowTextureInspector(const Texture& texture, float width)
@@ -144,35 +147,29 @@ void InspectorWindow::ShowCommonData(MainView* view) const
 
 void InspectorWindow::ShowComponentPicker()
 {
-    ImGui::SetNextWindowSize(ImVec2(300, 400));
-    if (ImGui::BeginPopupModal("ComponentList", nullptr, ImGuiWindowFlags_NoResize))
+    ComponentToAdd = 0;
+
+    auto show = [this](ImGui::CallbackDialog*)
     {
-      //  if (ImGui::BeginChild("ComponentList"))
+        for (auto& itr : ComponentManager::GetComponentList())
         {
-            for (auto& itr : ComponentManager::GetComponentList())
+            if (Scene.Entities.HasComponent(itr.second.Id, CurrentSelection) && itr.second.Unique)
+                continue;
+
+            if (ImGui::Selectable(itr.second.Name, ComponentToAdd == itr.first, ImGuiSelectableFlags_DontClosePopups))
             {
-                if (Scene.Entities.HasComponent(itr.second.Id, CurrentSelection) && itr.second.Unique)
-                    continue;
-
-                if (ImGui::Selectable(itr.second.Name, ComponentToAdd == itr.first))
-                {
-                    ComponentToAdd = itr.first;
-                }
+                ComponentToAdd = itr.first;
             }
-         //   ImGui::EndChild();
         }
+    };
 
-        if (ImGui::Button("Ok"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
+    auto result = [this](ImGui::DialogResult result, ImGui::CallbackDialog*)
+    { 
+        if (result == ImGui::DialogResult::Accept)
+            ComponentManager::Create(ComponentToAdd, CurrentSelection, Scene.Entities);
+    };
+
+    ImGui::CallbackDialog::Show("Component List", ICON_FA_PUZZLE_PIECE, show, result)->InitalSize = ImVec2(300,200);
 }
 
 void InspectorWindow::OnShow(MainView* view)
@@ -188,11 +185,7 @@ void InspectorWindow::OnShow(MainView* view)
     Entity* entity = Scene.Entities.GetEntity(CurrentSelection);
 
     if (ImGui::Button(ICON_FA_PLUS))
-    {
-        ImGui::OpenPopup("ComponentList");
-        ComponentToAdd = 0;
-    }
-    ShowComponentPicker();
+        ShowComponentPicker();
     
     char buffer[512];
     strcpy(buffer, entity->Name.c_str());

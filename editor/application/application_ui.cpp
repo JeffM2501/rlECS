@@ -53,6 +53,8 @@ void UIManager::Startup()
 
     ImGui::StyleColorsDark();
 
+    ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0, 0, 0, 0.75f);
+
     AddWindow(std::make_shared<LogWindow>());
 }
 

@@ -52,7 +52,9 @@ namespace ComponentManager
         if (itr == ComponentFactories.end())
             return nullptr;
 
-        return itr->second.Factory(entityId, entities);
+        Component* comp = itr->second.Factory(entityId, entities);
+        entities.StoreComponent(comp->Id(),comp);
+        return comp;
     }
 
     Component* Create(const char* typeName, EntityId_t entityId, EntitySet& entities)
@@ -169,6 +171,26 @@ Entity* EntitySet::GetEntity(EntityId_t id)
     return &(itr->second);
 }
 
+const char* EntitySet::GetEntityName(EntityId_t id)
+{
+    static std::string emptyName;
+
+    auto itr = EntityMap.find(id);
+    if (itr == EntityMap.end())
+        return emptyName.c_str();
+
+    return itr->second.Name.c_str();
+}
+
+EntityId_t EntitySet::GetEntityParent(EntityId_t id)
+{
+    auto itr = EntityMap.find(id);
+    if (itr == EntityMap.end())
+        return InvalidEntityId;
+
+    return itr->second.Parent;
+}
+
 EntityId_t EntitySet::AddChild(EntityId_t id)
 {
     Entity* entity = GetEntity(id);
@@ -205,6 +227,18 @@ void EntitySet::ReparentEntity(EntityId_t id, EntityId_t newParent)
         parent->Children.push_back(id);
 }
 
+size_t EntitySet::GetParentCount(EntityId_t id)
+{
+    Entity* entity = GetEntity(id);
+    if (entity == nullptr)
+        return 0;
+
+    if (entity->Parent == InvalidEntityId)
+        return 0;
+
+    return GetParentCount(entity->Parent) + 1;
+}
+
 void EntitySet::Update()
 {
     for (auto* component : ComponentUpdateCache)
@@ -237,6 +271,33 @@ void EntitySet::DoForEachRootEntity(std::function<void(EntityId_t)> func)
 {
     for (EntityId_t entity : RootNodes)
         func(entity);
+}
+
+void EntitySet::DoForEachSiblingEntity(EntityId_t entityId, std::function<void(EntityId_t)> func)
+{
+    Entity* entity = GetEntity(entityId);
+    if (entity == nullptr || func == nullptr)
+        return;
+
+    if (entity->Parent == InvalidEntityId)
+    {
+        for (EntityId_t entity : RootNodes)
+        {
+            if (entity != entityId)
+                func(entity);
+        }
+        return;
+    }
+
+    Entity* parent = GetEntity(entity->Parent);
+    if (parent != nullptr)
+    {
+        for (EntityId_t entity : parent->Children)
+        {
+            if (entity != entityId)
+                func(entity);
+        }
+    }
 }
 
 Component* EntitySet::StoreComponent(size_t compId, Component* component)

@@ -33,6 +33,7 @@
 #include "view/main_view.h"
 #include "outliner/scene_outliner.h"
 #include "scene.h"
+#include "scene_editor.h"
 
 #include <memory>
 
@@ -41,6 +42,10 @@ class SceneView : public ThreeDView
 protected:
 
 public:
+    SceneView()
+        : Editor(Scene)
+    {}
+
     inline const char* GetName() override { return "Scene View"; }
 
     void OnSetup() override;
@@ -53,6 +58,7 @@ protected:
     uint64_t EditorCamera = 0;
 
     SceneData Scene;
+    SceneEditor Editor;
 
     std::shared_ptr<SceneOutliner> Outliner;
 

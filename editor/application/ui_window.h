@@ -62,7 +62,7 @@ protected:
     std::string Name;
 };
 
-constexpr char LogWindowName[] = ICON_FA_EXCLAMATION_TRIANGLE "Log###RaylibLogWindow";
+constexpr char LogWindowName[] = ICON_FA_EXCLAMATION_TRIANGLE " Log###RaylibLogWindow";
 
 class LogWindow : public UIWindow
 {

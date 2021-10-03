@@ -59,6 +59,8 @@ void SceneView::OnSetup()
 
     ShowGround = false;
 
+    Editor.SetOutliner(Outliner);
+
     Scene.SetupEditorBaseScene();
     Scene.SetupDefaultEntities();
 

@@ -74,8 +74,7 @@ private:
     std::map<size_t, ComponentTable> ComponentDB;
     std::vector<Component*> ComponentUpdateCache;
 
-private:
-    Component* StoreComponent(size_t componentId, Component* component);
+private:   
     void EraseAllComponents(size_t componentId, EntityId_t entityId);
     void EraseComponent(size_t componentId, Component* component);
     Component* FindComponent(size_t componentId, EntityId_t entityId);
@@ -88,12 +87,18 @@ public:
     void RemoveEntity(EntityId_t entityId, bool removeChildren = true);
     Entity* GetEntity(EntityId_t id);
 
+    const char* GetEntityName(EntityId_t id);
+    EntityId_t GetEntityParent(EntityId_t id);
+
     EntityId_t AddChild(EntityId_t id);
     void ReparentEntity(EntityId_t id, EntityId_t newParent);
+    size_t GetParentCount(EntityId_t id);
 
     bool HasComponent(size_t componentId, EntityId_t entityId);
 
     void Update();
+
+    Component* StoreComponent(size_t componentId, Component* component);
 
     /// <summary>
     /// Iterate all entities by Id
@@ -106,6 +111,13 @@ public:
     /// </summary>
     /// <param name="func">Callback to run for every entity</param>
     void DoForEachRootEntity(std::function<void(EntityId_t)> func);
+
+    /// <summary>
+    /// Iterate the entities at the same tree level as the specified entity
+    /// </summary>
+    /// <param name="entity">entity to check</param>
+    /// <param name="func">Callback to run for every sibling entity</param>
+    void DoForEachSiblingEntity(EntityId_t entity, std::function<void(EntityId_t)> func);
 
     /// <summary>
     /// Iterate all the entities with a component
@@ -330,7 +342,7 @@ namespace ComponentManager
     Component* Create(const char* typeName, EntityId_t entityId, EntitySet& manager);
 
     template<class T>
-    inline void Register(bool unique = false)
+    inline void Register(bool unique = true)
     {
         Register(T::GetComponentId(), T::GetComponentName(), T::Factory, unique);
     }

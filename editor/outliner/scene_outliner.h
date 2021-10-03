@@ -59,9 +59,6 @@ public:
 
 class SceneOutliner : public UIWindow
 {
-protected:
-    EntitySet& Entities;
-
 public:
     SceneOutliner(EntitySet& entities);
     void GetName(std::string& name, MainView* view) const override;
@@ -70,4 +67,12 @@ public:
     void OnShow(MainView* view) override;
 
     EntitySelection Selection;
+
+    std::function<void(EntityId_t parent)> CreateEntityCallback;
+
+protected:
+    EntityId_t GetRootmostParent();
+
+protected:
+    EntitySet& Entities;
 };

@@ -18,7 +18,7 @@ void ComponentInspector::Inspect(Component* component)
 bool ComponentInspector::Header(Component* component, const char* name)
 {
     static char temp[512];
-    sprintf(temp, "%s###%s%zuheader", name, component->ComponentName(), component->Id());
+    sprintf(temp, "%s### %s %zu header", name, component->ComponentName(), size_t(component));
 
     return ImGui::CollapsingHeader(temp, ImGuiTreeNodeFlags_DefaultOpen);
 }
@@ -35,8 +35,6 @@ void ComponentInspector::EndContent()
 
 class DefaultInspector : public ComponentInspector
 {
-public:
-    
 };
 
 namespace ComponentInspectorRegistry
