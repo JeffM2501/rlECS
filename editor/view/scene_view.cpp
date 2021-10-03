@@ -101,6 +101,29 @@ void SceneView::OnShutdown()
 void SceneView::OnShow(const Rectangle& contentArea)
 {
     Scene.Systems.GetSystem<RenderSystem>()->Draw();
+
+    rlDisableDepthMask();
+    rlDisableDepthTest();
+
+    // selection gizmoes
+    for (EntityId_t id : Outliner->Selection.GetSelection())
+    {
+        TransformComponent* transform = Scene.Entities.GetComponent<TransformComponent>(id);
+        if (transform != nullptr)
+        {
+            transform->PushMatrix();
+
+            rlSetLineWidth(3);
+            DrawGizmo(0.25f);
+
+            transform->PopMatrix();
+        }
+    }
+    rlDrawRenderBatchActive();
+    rlSetLineWidth(1);
+
+    rlEnableDepthTest();
+    rlEnableDepthMask();
 }
 
 void SceneView::OnShowOverlay(const Rectangle& contentArea)

@@ -48,6 +48,7 @@ private:
 public:
     bool IsSelected(EntityId_t id);
     void Select(EntityId_t id, bool selected = true, bool add = false);
+    void Clear();
     inline bool IsEmpty() { return Selection.empty(); }
 
     inline EntityId_t Begin() { return IsEmpty() ? InvalidEntityId : *Selection.begin(); }
@@ -72,6 +73,7 @@ public:
 
 protected:
     EntityId_t GetRootmostParent();
+    EntityId_t GetRootmostEntity();
 
 protected:
     EntitySet& Entities;

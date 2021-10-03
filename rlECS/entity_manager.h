@@ -96,6 +96,12 @@ public:
 
     bool HasComponent(size_t componentId, EntityId_t entityId);
 
+    template<class T>
+    inline bool HasComponent(EntityId_t entityId)
+    {
+        return HasComponent(T::GetComponentId(), entityId);
+    }
+
     void Update();
 
     Component* StoreComponent(size_t componentId, Component* component);

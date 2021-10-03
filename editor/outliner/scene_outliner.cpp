@@ -32,6 +32,7 @@
 
 #include "outliner/scene_outliner.h"
 
+#include "components/editor_components.h"
 #include "entity_manager.h"
 #include "application/ui_window.h"
 
@@ -56,6 +57,11 @@ void EntitySelection::Select(EntityId_t id, bool selected, bool add)
         else
             Selection.insert(id);
     }
+}
+
+void EntitySelection::Clear()
+{
+    Selection.clear();
 }
 
 const std::set<EntityId_t> EntitySelection::GetSelection()
@@ -91,7 +97,7 @@ const char* SceneOutliner::GetMenuName() const
 
 void SceneOutliner::ShowEntityNode(EntityId_t entityId)
 {
-    if (entityId == InvalidEntityId)
+    if (entityId == InvalidEntityId || Entities.HasComponent<EditorHiddenComponent>(entityId))
         return;
 
     auto* entity = Entities.GetEntity(entityId);
@@ -115,8 +121,8 @@ void SceneOutliner::ShowEntityNode(EntityId_t entityId)
         ImGui::SameLine();
     }
 
-    if (ImGui::Selectable(displayName.c_str(), &selected, ImGuiSelectableFlags_None) && (!Selection.IsSelected(entityId) || toggle))
-        Selection.Select(entityId, selected, toggle);
+    if (ImGui::Selectable(displayName.c_str(), &selected, ImGuiSelectableFlags_None))
+        Selection.Select(entityId, selected | !toggle, toggle);
 
     if (open)
     {
@@ -134,16 +140,29 @@ void SceneOutliner::OnShow(MainView * view)
         if (CreateEntityCallback != nullptr)
             CreateEntityCallback(GetRootmostParent());
     }
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_FA_USER_PLUS))
+    {
+        if (CreateEntityCallback != nullptr)
+            CreateEntityCallback(GetRootmostEntity());
+    }
 
     if (ImGui::BeginChild("Root", ImVec2(ImGui::GetContentRegionAvailWidth(), ImGui::GetContentRegionAvail().y - 30), true))
     {
         bool selected = false;
-        if (ImGui::TreeNodeEx("Scene Root", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            Entities.DoForEachRootEntity([this](EntityId_t id) {ShowEntityNode(id); });
 
-            ImGui::TreePop();
+        if (ImGui::Selectable("Scene Root",selected))
+        {
+            bool toggle = ImGui::IsKeyDown(KEY_LEFT_CONTROL) || ImGui::IsKeyDown(KEY_RIGHT_CONTROL);
+            if (!toggle)
+                Selection.Clear();
         }
+
+        ImGui::TreePush();
+        Entities.DoForEachRootEntity([this](EntityId_t id) {ShowEntityNode(id); });
+
+        ImGui::TreePop();
+ 
         ImGui::EndChild();
     }
 }
@@ -165,6 +184,29 @@ EntityId_t SceneOutliner::GetRootmostParent()
         {
             minDepth = count;
             minParent = Entities.GetEntityParent(id);
+        }
+    }
+
+    return minParent;
+}
+
+EntityId_t SceneOutliner::GetRootmostEntity()
+{
+    size_t minDepth = size_t(-1);
+    EntityId_t minParent = InvalidEntityId;
+
+    for (EntityId_t id : Selection.GetSelection())
+    {
+        size_t count = Entities.GetParentCount(id);
+
+        // can't get any more root than this
+        if (count == 0)
+            return id;
+
+        if (count < minDepth)
+        {
+            minDepth = count;
+            minParent = id;
         }
     }
 

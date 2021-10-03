@@ -43,7 +43,7 @@ std::string SceneEditor::GetUniqueEntityName(const std::string& baseName, Entity
                 return;
 
             std::string sub = sibName.substr(baseName.size() + 1);
-            if (sub.rfind("(", 0) == 0 && sub.rfind(")", sub.size() - 1) == 0)
+            if (sub[0] == '(' && sub[sub.size() - 1] == ')')
             {
                 int val = atoi(sub.substr(1, sub.length() - 2).c_str());
                 if (val > max)
