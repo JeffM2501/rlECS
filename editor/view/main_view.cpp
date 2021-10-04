@@ -184,7 +184,7 @@ void ThreeDView::ShowInspectorContents(const InspectorWindow& window)
     OnShowInspector(window);
 }
 
-void ThreeDView::DrawGizmo(float scale)
+void ThreeDView::DrawAxis(float scale)
 {
     DrawLine3D(Vector3{ 0,0,0 }, Vector3{ scale,0,0 }, RED);
     DrawLine3D(Vector3{ scale,0,0 }, Vector3{ scale * 0.75f,0,scale * 0.125f }, RED);
@@ -194,6 +194,32 @@ void ThreeDView::DrawGizmo(float scale)
 
     DrawLine3D(Vector3{ 0,0,0 }, Vector3{ 0,0,scale }, BLUE);
     DrawLine3D(Vector3{ 0,0,scale }, Vector3{ scale * 0.125f, 0,scale * 0.75f }, BLUE);
+}
+
+void DrawArrow(float scale, Color& color)
+{
+    DrawCylinder(Vector3Zero(), scale * 0.05f, scale * 0.05f, scale * 0.75f, 10, color);
+    DrawCylinder(Vector3{ 0,scale * .75f,0 }, scale * 0, scale * 0.125f, scale * 0.25f, 10, color);
+}
+
+void ThreeDView::DrawGizmo(float scale)
+{
+    rlPushMatrix();
+    rlRotatef(90, 0, 0, 1);
+    DrawArrow(scale, RED);
+    rlPopMatrix();
+
+    rlPushMatrix();
+    //rlRotatef(90, 0, 0, 1);
+    DrawArrow(scale, GREEN);
+    rlPopMatrix();
+
+    rlPushMatrix();
+    rlRotatef(90, 1, 0, 0);
+    DrawArrow(scale, BLUE);
+    rlPopMatrix();
+
+    DrawSphere(Vector3Zero(), scale * 0.1f, WHITE);
 }
 
 void ThreeDView::SetupSkybox()
@@ -260,7 +286,7 @@ void ThreeDView::DrawDefaultScene()
 
     if (ShowOrigin)
     {
-        DrawGizmo(2.0f);
+        DrawAxis(2.0f);
         rlDrawRenderBatchActive();
     }
     rlSetLineWidth(1.0f);

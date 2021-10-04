@@ -78,6 +78,31 @@ project "rlECS"
 		"rlECS/systems/*.cpp",
 		"rlECS/systems/*.h",
 	}
+
+project "gameCommon"
+	kind "StaticLib"
+	location "build/gameCommon"
+	language "C++"
+	targetdir "bin/%{cfg.buildcfg}"
+	cppdialect "C++17"
+	
+	includedirs {"raylib/src","rlECS", "gameCommon"}
+	vpaths 
+	{
+		["Header Files"] = { "*.h"},
+		["Source Files"] = {"*.c", "*.cpp"},
+	}
+	files 
+	{
+		"gameCommon/**.c",
+		"gameCommon/**.cpp",
+		"gameCommon/**.h",
+		"gameCommon/components/*.cpp",
+		"gameCommon/components/*.h",
+		"gameCommon/systems/*.cpp",
+		"gameCommon/systems/*.h",
+	}
+	links {"rlECS"}
 	
 project "rlExtrasCPP"
 	kind "StaticLib"
@@ -161,6 +186,7 @@ project "editor"
 		["Header Files"] = { "*.h"},
 		["Source Files"] = {"*.c", "*.cpp"},
 	}
+	
 	files 
 	{
 		"editor/**.c",
@@ -178,9 +204,27 @@ project "editor"
 		"editor/view/*.h",
 	}
 	
-	links {"raylib", "rlExtrasCPP", "rlImGui", "clip", "rlECS"}
+	links 
+	{
+		"raylib",
+		"rlExtrasCPP",
+		"rlImGui",
+		"clip",
+		"rlECS",
+		"gameCommon"
+	}
 	
-	includedirs { "editor", "raylib/src", "raylibExtras/rlExtrasCPP",  "raylibExtras/rlImGui", "raylibExtras/imgui", "clip", "rlECS"}
+	includedirs 
+	{
+		"editor",
+		"raylib/src", 
+		"raylibExtras/rlExtrasCPP",
+		"raylibExtras/rlImGui",
+		"raylibExtras/imgui", 
+		"clip", 
+		"rlECS",
+		"gameCommon"
+	}
     
 	defines{"PLATFORM_DESKTOP", "GRAPHICS_API_OPENGL_33"}
 	

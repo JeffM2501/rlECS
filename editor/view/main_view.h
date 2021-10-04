@@ -125,6 +125,7 @@ public:
 
     inline void Update() override { OnUpdate(); }
 protected:
+    void DrawAxis(float scale = 1);
     void DrawGizmo(float scale = 1);
     void SetupSkybox();
     void DrawSkybox();

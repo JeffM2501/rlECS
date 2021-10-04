@@ -47,6 +47,8 @@
 #include "rlImGui.h"
 #include "RLAssets.h"
 
+#include "game_components.h"
+
 #include <deque>
 
 ApplicationContext GlobalContext;
@@ -169,7 +171,15 @@ int main(int argc, char* argv[])
         MaximizeWindow();
 
     ApplicationStartup();
+
+    // register standard components
     RegisterComponents();
+
+    // register anything from the common game lib
+    RegisterGameComponents();
+    RegisterGameSystems();
+
+    // register editor inspectors
     RegisterCommonInspectors();
 
     GlobalContext.ChangeView(new SceneView());
