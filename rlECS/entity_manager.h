@@ -340,7 +340,7 @@ struct ComponentInfo
 
 namespace ComponentManager
 {
-    void Register(size_t typeId, const char* name, ComponentFactory factory, bool unquie);
+    void Register(size_t typeId, const char* name, ComponentFactory factory, bool unique);
 
     const std::map<size_t, ComponentInfo>& GetComponentList();
 
